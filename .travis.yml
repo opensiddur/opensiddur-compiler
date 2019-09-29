@@ -20,8 +20,11 @@ env:
     - BOOT_DISK_SIZE_GB=10
     - SERVICE_ACCOUNT=opensiddur-deploy-1@opensiddur-client.iam.gserviceaccount.com
     # DYN_EMAIL
+    - secure: "ZUN56scxYuPmpoRkmbcv1+kiZPPX3CT4RkL6hmkA3GEIMaNtRvvEHfbxX+xT+f1Yqrqn+mcpB+Y+4BV/YWDi5bGbFDrwY59BWghktcO7iIGNPBbJZc4U+Wx6LMgGy92BT3+I9+hFgNHa8hEBcHZ7s6QTW8Mv/8ngSVfbJjd5fxN8a1fEzhdD1H+3x8FAliv01DFa51z0jOR5ej8SLmT2c+B7UVwEQrwGheGs67YO57jhvJAegMQfMoVT7UFDurNuRXbJ2Jckl6HsHFWYWfN0sywudps0rtUTdAbmxdCxHj5xx9ZC1kN4PS2EUZGaAigrqU0gaRXGWFgJNQn08x9EaU8rQ0UTgeEUI9TxCukjP9uSs+pTgGD0uFZZvK7TvRkXBoK38ZsEQGEsFn6eoyiZHXYAPS9GaPAg6CtCQyQ+Wc3rg4cTE667NmJBSF02AtG1Bs3diRXfTFhWQeI/ENwOYmM651B1jCYttXp0qm45WMgJcJm9PYxlvqcJ3QZw2Egj3D7PNAH1Gy7Z3DgsRTWvrqSFzEgnJe+q11Xrj+9QR5fQsDiwLJHOIyArqe7zam0D1B9xYJEphtiALDYCp9MSpBj0r1xMwPL/ZTxjn1HSj92wuc4JE/Fv3JJlQ7k7P46qbrL6oQfAHCPLrZitIxOR2e/GWSts0F7gmQHV7VGSWuY="
     # DYN_USERNAME
+    - secure: "IVcg273c4iVTMVVjJ4fm6Mn/MezTiBcwPpnSaII3sXZzes3UE+UtiICQ6ucDNb7dYXniMq+nvRKKmfMXfW4Ldy1E49To/6LPwQkfwgonCvQ9A0QN/xDl6nBQA8QX2nsMbr3O43z9TNGk6rBi71LB6vp++2dzRyKKk9gvInYgcSz8miYT3bzUediMTcg3IkVHmqtjgWpmL4Q6l81/czYwDniGGhjrHGDZvS9gHRn8D0ofJxiimPQWfAZGBqtdb6ZL4YNh0ARyOeVH6LtpOftrTvI6LsKl3V0xKmwGVutrtnIA8oigrbDfrEopqRYSwEjd2AKRXgxZXATopbS37Wlkwwyl1QtzwjE/kIZqkghzZi9OZKZLbfyOzX48N44d6WV+AB9gr1mY4VJJxyYsmxpNHNUrSd8ujwNd2LZnaTXM1BMmAB1PeqRnOv2vQ9VWnJob1+kh0KVbm7Xk9+R6SOLVBakP9kLVivXD5aW0hYotLAuuU3T6r6TOV7wd6LHJ+gH1lWcOH3Hfa2FMzk/+aadCVXnnLod1w4aY2nT9KGyRW3KG1YHjd1fP5ItcnQzWwGm9O4K50V3S99ZmX+c8ywlu7cQ7KCx/HGgJwF0iOglHMdp1X1Z3TLN0Ec2U7wErNhFBXLU0ijf4Db1hl/2xkm9IX5RMlrifnI8qE3eCVbzrHyg="
     # DYN_PASSWORD
+    - secure: "n18xWcHpAsxVw1if6WpiRfY2UpiBpo8SBceRH0rixwEx0LWQdHTLLXBA/GEkkaWg1Ac+CtOXqo1jNhm9/L23qhLp/sNV7vKvtxdxVrBtnENIMdln34hkozkZStrlVtilHycYqGdTp4D6KVJuAkqJc9LqDLe5ViE/y+hRKGqN427nxYqs6K3pWmPiR/nm3ElgEtRKXy9BkqW89BsEWZQpAnBe93zh7rTCZKdr1MtKO37S9FVGtXPDENlx2oh+a/8C4WCM/TP1aP+nDmULU9rYAGkhV02W0aQ5dyY4LmN6nnUt6nlVHd7bKFuXeWBud6f1dRpcu/weKXqoiXXTUvh4qWFiTQZMAh+Q9bhxELLvqLXv+EEJImcp2/x7TptOb1lEiMdDoPrJc6DngYzwIWqBYOCmYr+dp3TwJ/zRhqJO3siME+rsJ91QYFlp6zI1vwnqx63TNdCaRVlwcs6bB89WnR2x+b8cyBdSIJdDssyAzpKpjP4zw+02YOizB3cZaRDb6H5D2Dg+3wsREChkU45K5/hEMkQWIcQsAY5l614dUDlBWC/Z+cVKuyw4Sr3kLlQEQkDxss/nRjmoEpkSqW1Sm0m5S+xx8ZKkv8hoUcYvK7XJmkLC6fM9veSGUMk5pC8gxWnwxDkokhN4L5bPdb6QDvcOlCC7VbOHBzVeRpxFyFs="
 
 before_install:
   - echo -e "machine github.com\n  login $GITHUB_TOKEN" > ~/.netrc
@@ -32,31 +35,30 @@ before_install:
   - curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
   - sudo apt-get update -y
   - sudo apt-get install -y google-cloud-sdk
-  - echo "Nothing more to do for now"
-#  - openssl aes-256-cbc -K $encrypted_f7e573a7dafa_key -iv $encrypted_f7e573a7dafa_iv
-#    -in credentials.tar.gz.enc -out credentials.tar.gz -d
-#  - tar zxvf credentials.tar.gz
-#  - gcloud auth activate-service-account --key-file=client-secret.json
-#  - gcloud config set project ${PROJECT_NAME}
-#  - ssh-keygen -q -N "" -f ~/.ssh/google_compute_engine
+  - openssl aes-256-cbc -K $encrypted_33f4d3c408f1_key -iv $encrypted_33f4d3c408f1_iv
+    -in credentials.tar.gz.enc -out credentials.tar.gz -d
+  - tar zxvf credentials.tar.gz
+  - gcloud auth activate-service-account --key-file=client-secret.json
+  - gcloud config set project ${PROJECT_NAME}
+  - ssh-keygen -q -N "" -f ~/.ssh/google_compute_engine
 
-#script:
-#  - |
-#    gcloud compute \
-#      --project=${PROJECT_NAME} instances create ${INSTANCE_NAME} \
-#      --zone=${ZONE} \
-#      --machine-type=${MACHINE_TYPE} \
-#      --network=default \
-#      --network-tier=PREMIUM \
-#      --maintenance-policy=MIGRATE \
-#      --scopes=https://www.googleapis.com/auth/cloud-platform \
-#      --tags=http-server,https-server \
-#      --image=${IMAGE} \
-#      --image-project=${IMAGE_PROJECT} \
-#      --boot-disk-size=${BOOT_DISK_SIZE_GB}GB \
-#      --boot-disk-type=pd-standard \
-#      --boot-disk-device-name=${INSTANCE_NAME} \
-#      --service-account=${SERVICE_ACCOUNT} \
-#      --metadata-from-file startup-script=setup/gcloud-startup-script.sh \
-#      --metadata BRANCH=${BRANCH},DYN_USERNAME=${DYN_USERNAME},DYN_PASSWORD=${DYN_PASSWORD},DYN_EMAIL=${DYN_EMAIL},enable-oslogin=true
-#
+script:
+  - |
+    gcloud compute \
+      --project=${PROJECT_NAME} instances create ${INSTANCE_NAME} \
+      --zone=${ZONE} \
+      --machine-type=${MACHINE_TYPE} \
+      --network=default \
+      --network-tier=PREMIUM \
+      --maintenance-policy=MIGRATE \
+      --scopes=https://www.googleapis.com/auth/cloud-platform \
+      --tags=http-server,https-server \
+      --image=${IMAGE} \
+      --image-project=${IMAGE_PROJECT} \
+      --boot-disk-size=${BOOT_DISK_SIZE_GB}GB \
+      --boot-disk-type=pd-standard \
+      --boot-disk-device-name=${INSTANCE_NAME} \
+      --service-account=${SERVICE_ACCOUNT} \
+      --metadata-from-file startup-script=setup/gcloud-startup-script.sh \
+      --metadata BRANCH=${BRANCH},DYN_USERNAME=${DYN_USERNAME},DYN_PASSWORD=${DYN_PASSWORD},DYN_EMAIL=${DYN_EMAIL},enable-oslogin=true
+
