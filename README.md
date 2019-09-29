@@ -1,5 +1,10 @@
 # Open Siddur Compiler
 
+Build status:
+master: [![master build status](https://travis-ci.org/opensiddur/opensiddur-compiler.svg?branch=master)](https://travis-ci.org/opensiddur/opensiddur)
+develop: [![develop build status](https://travis-ci.org/opensiddur/opensiddur-compiler.svg?branch=develop)](https://travis-ci.org/opensiddur/opensiddur)
+
+
 With the advent of JLPTEI 2.0, which is not backwards compatible with JLPTEI 1.0,
 there is a need to temporarily disable most components of the prior editing app.
 This is also an opportunity to modernize the code and make it more modular 
