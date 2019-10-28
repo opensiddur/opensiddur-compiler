@@ -7,7 +7,7 @@ it("correctly parses a valid discovery API HTML", () => {
             <title>Test Discovery API</title>
             <meta name="startIndex" content="1"/>
             <meta name="itemsPerPage" content="5"/>
-            <meta name="totalResults" content="2"/>
+            <meta name="totalResults" content="3"/>
         </head>
         <body>
             <ul class="results">
@@ -19,6 +19,13 @@ it("correctly parses a valid discovery API HTML", () => {
                 <li class="result">
                     <a class="document" href="/link/to/document2">second document</a>
                 </li>
+                <li class="result">
+                    <a class="document" href="/link/to/document3">third document</a>
+                    <ol class="contexts">
+                        <li class="context"><span class="previous">previous </span><span class="match">match</span><span class="following"> following</span></li>
+                        <li class="context"><span class="previous">previous two </span><span class="match">match</span><span class="following"> following two</span></li>
+                    </ol>
+                </li>
             </ul>
         </body>
     </html>`
@@ -26,19 +33,25 @@ it("correctly parses a valid discovery API HTML", () => {
   const result = discoveryApi.parseDiscoveryHtml(html)
 
   expect(result.startIndex).toBe(1)
-  expect(result.endIndex).toBe(2)
+  expect(result.endIndex).toBe(3)
   expect(result.itemsPerPage).toBe(5)
-  expect(result.totalResults).toBe(2)
+  expect(result.totalResults).toBe(3)
 
-  expect(result.items.length).toBe(2)
+  expect(result.items.length).toBe(3)
 
   expect(result.items[0].title).toBe("first document")
   expect(result.items[0].url).toBe("/link/to/document1")
   expect(result.items[0].prop1).toBe("/link/to/document1/prop1")
   expect(result.items[0].prop2).toBe("/link/to/document1?prop2=true")
+  expect(result.items[0].context).toStrictEqual([])
 
   expect(result.items[1].title).toBe("second document")
   expect(result.items[1].url).toBe("/link/to/document2")
+  expect(result.items[1].context).toStrictEqual([])
+
+  expect(result.items[2].title).toBe("third document")
+  expect(result.items[2].url).toBe("/link/to/document3")
+  expect(result.items[2].context).toStrictEqual(["previous match following", "previous two match following two"])
 })
 
 describe("fetching data", () => {
@@ -71,6 +84,11 @@ describe("fetching data", () => {
         <body>
             <ul class="results"></ul>
         </body>
+    </html>`
+
+  const notDiscoveryHtml = `<html>
+        <head><title>Not discovery</title></head>
+        <body><p>something else</p></body>
     </html>`
 
   const mockReturnMinimal = minimalReturnHtml
@@ -150,6 +168,15 @@ describe("fetching data", () => {
 
   })
 
+  it("returns a failed promise if the data are not parsable as a discovery API", async () => {
+    fetch.mockResponseOnce(notDiscoveryHtml)
+
+    await expect(discoveryApi.list("discovery")).rejects.toMatchObject({
+      success: false,
+      status: "parse failed"
+    })
+  })
+
   it("returns a failed promise if fetch returns not OK",  async () => {
     fetch.mockResponseOnce("Bad request", { status: 400 })
 
@@ -160,4 +187,5 @@ describe("fetching data", () => {
     })
 
   })
+
 })

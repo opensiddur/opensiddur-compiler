@@ -12,6 +12,10 @@
         href="[url]">[document title]</a>
       <a class="alt" property="[some property, like 'access']" href="[url for that property]">[name of property]</a>
       ...
+      <ol class="contexts">
+        <li class="context"><span class="previous">...</span><span class="match"></span><span class="following"></span></li>
+        ...
+      </ol>
   </ul>
 
  The class instance will keep track of current paging and yield
@@ -42,7 +46,8 @@ export default class DiscoveryApi {
 
       let item = {
         title: title,
-        url: url
+        url: url,
+        context: []
       }
 
       for (let alt of result.querySelectorAll("a.alt")) {
@@ -50,6 +55,11 @@ export default class DiscoveryApi {
         const link = alt.href
 
         item[property] = link
+      }
+
+      for (let context of result.querySelectorAll("ol.contexts li.context")) {
+        const content = context.textContent
+        item.context.push(content)
       }
 
       items.push(item)
@@ -97,7 +107,6 @@ export default class DiscoveryApi {
             const status = response.status
             // this is an API error
             return response.text().then(text => {
-              console.log(status, text)
               return Promise.reject({
                 success: false,
                 status: status,
@@ -107,7 +116,16 @@ export default class DiscoveryApi {
           }
         })
         .then( responseText => {
-          return this.parseDiscoveryHtml(responseText)
+          try {
+            return this.parseDiscoveryHtml(responseText)
+          }
+          catch (error) {
+            return Promise.reject({
+              success: false,
+              status: "parse failed",
+              error: error.message
+            })
+          }
         })
     }
     catch (error) {
