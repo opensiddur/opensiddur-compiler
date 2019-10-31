@@ -1,13 +1,16 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 
-import DiscoveryList from './DiscoveryList'
+import SearchableSelectableResultsList from './SearchableSelectableResultsList'
 
 function App() {
+  const handleSelection = (result) => {
+    console.log(`Selected: ${result.title}, ${result.url}`)
+  }
+
   return (
     <div className="App">
-      <DiscoveryList api="original" q="" />
+      <SearchableSelectableResultsList api="original" selectionCallback={handleSelection} />
     </div>
   );
 }
