@@ -7,6 +7,7 @@ import React, {useState, useEffect} from 'react';
 import DiscoveryApi from "./DiscoveryApi"
 import SearchBox from "./SearchBox"
 import SelectableResultsList from "./SelectableResultsList"
+import SearchPager from "./SearchPager"
 
 export default function SearchableSelectableResultsList(props) {
   /* props expected:
@@ -18,38 +19,38 @@ export default function SearchableSelectableResultsList(props) {
   // these will be used on the next fetch
   const [startIndex, setStartIndex] = useState(1)
   const itemsPerPage = 100
-  const [endIndex, setEndIndex] = useState(null)
-  const [totalResults, setTotalResults] = useState(null)
-  const [resultData, setResultData] = useState([])
+  const [resultData, setResultData] = useState({})
   const [queryString, setQueryString] = useState("")
 
   const fetchListData = () => {
-    if (totalResults == null || startIndex < totalResults) {
-      const fetcher = async () => {
-        const newResults = await discoveryApi.list(props.api, queryString, startIndex, itemsPerPage)
-
-        //setStartIndex(newResults.endIndex + 1)
-        //setEndIndex(newResults.endIndex)
-        //setTotalResults(newResults.totalResults)
-        setResultData(newResults.items)
-      }
-
-      fetcher()
+    console.log(`fetchListData()`)
+    const fetcher = async () => {
+      const newResults = await discoveryApi.list(props.api, queryString, startIndex, itemsPerPage)
+      setResultData(newResults)
     }
+
+    fetcher()
   }
 
-  useEffect(() => fetchListData())
+  useEffect(() => fetchListData(), [queryString, startIndex])
 
   const queryCallback = (newQueryString) => {
     if (newQueryString !== queryString) {
       setQueryString(newQueryString)
+      setStartIndex(1)
     }
+  }
+
+  const pagingCallback = (newStartIndex) => {
+    console.log(`pagingCallback(${newStartIndex})`)
+    setStartIndex(newStartIndex)
   }
 
   return (
     <div className="SearchableSelectableResultsList">
       <SearchBox queryCallback={queryCallback} />
-      <SelectableResultsList results={resultData} selectionCallback={props.selectionCallback}/>
+      <SearchPager results={resultData} pagingCallback={pagingCallback} />
+      <SelectableResultsList results={resultData.items} selectionCallback={props.selectionCallback}/>
     </div>
   )
 }

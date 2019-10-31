@@ -14,6 +14,7 @@ export default function SelectableResultsList(props) {
 
   return (
     <ul className="SelectableResultsList">{
+      (props.results === undefined) ? <li key="0">Loading...</li> :
       props.results.map(result => {
         const key = result.url.split("/").pop()
         return <SelectableResult key={key} result={result} selectionCallback={props.selectionCallback}/>
