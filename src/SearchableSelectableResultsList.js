@@ -23,7 +23,6 @@ export default function SearchableSelectableResultsList(props) {
   const [queryString, setQueryString] = useState("")
 
   const fetchListData = () => {
-    console.log(`fetchListData()`)
     const fetcher = async () => {
       const newResults = await discoveryApi.list(props.api, queryString, startIndex, itemsPerPage)
       setResultData(newResults)
@@ -42,13 +41,12 @@ export default function SearchableSelectableResultsList(props) {
   }
 
   const pagingCallback = (newStartIndex) => {
-    console.log(`pagingCallback(${newStartIndex})`)
     setStartIndex(newStartIndex)
   }
 
   return (
     <div className="SearchableSelectableResultsList">
-      <SearchBox queryCallback={queryCallback} />
+      <SearchBox placeholder="Search..." queryCallback={queryCallback} />
       <SearchPager results={resultData} pagingCallback={pagingCallback} />
       <SelectableResultsList results={resultData.items} selectionCallback={props.selectionCallback}/>
     </div>

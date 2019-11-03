@@ -7,6 +7,7 @@ import React, {useState, useEffect} from 'react';
 
 export default function SearchBox(props) {
   /* props:
+   * placeholder - the placeholder text
    * queryCallback - the function that should be called when a new search string is selected.
    *                 Takes 1 parameter (a string)
    */
@@ -22,7 +23,8 @@ export default function SearchBox(props) {
     <form onSubmit={handleSubmit}>
       <label>
         <input
-          type="text"
+          type="search"
+          placeholder={props.placeholder}
           value={query}
           onChange={e => setQuery(e.target.value)}/>
       </label>

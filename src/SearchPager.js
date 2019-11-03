@@ -29,7 +29,7 @@ export default function SearchPager(props) {
   const startIndex = props.results.startIndex
   const currentPage = startIndexToPage(startIndex)
   const lastPage = startIndexToPage(totalResults)
-  console.log(`sp: ${itemsPerPage} ${totalResults} ${numberOfPages} ${startIndex} ${currentPage} ${lastPage}`)
+
   /* we'll always show a window of pages in each direction of the current page */
   const pageWindow = 3
   const end = Math.min(currentPage + pageWindow, lastPage)
