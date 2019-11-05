@@ -18,7 +18,7 @@ export default function SearchableSelectableResultsList(props) {
 
   // these will be used on the next fetch
   const [startIndex, setStartIndex] = useState(1)
-  const itemsPerPage = 100
+  const itemsPerPage = 20
   const [resultData, setResultData] = useState({})
   const [queryString, setQueryString] = useState("")
 
@@ -47,7 +47,7 @@ export default function SearchableSelectableResultsList(props) {
   return (
     <div className="SearchableSelectableResultsList">
       <SearchBox placeholder="Search..." queryCallback={queryCallback} />
-      <SearchPager results={resultData} pagingCallback={pagingCallback} />
+      <SearchPager window="5" results={resultData} pagingCallback={pagingCallback} />
       <SelectableResultsList results={resultData.items} selectionCallback={props.selectionCallback}/>
     </div>
   )
