@@ -18,12 +18,14 @@ export default function SelectableResult(props) {
 
   return (
     <li className="SelectableResult" onClick={handleClick}>
-      <span>{result.title}</span>
-      <ol className="SelectableResultContexts">{
-        result.context.map( (con, index) => {
-          return <li key={index} className="SelectableResultContext">{con}</li>
-        })
-      }</ol>
+      <span className="SelectableResultTitle">{result.title}</span>
+      { (result.hasOwnProperty("context") && result.context.length > 0) &&
+        <ol className="SelectableResultContexts">{
+          result.context.map((con, index) => {
+            return <li key={index} className="SelectableResultContext">{con}</li>
+          })
+        }</ol>
+      }
     </li>
   )
 }
