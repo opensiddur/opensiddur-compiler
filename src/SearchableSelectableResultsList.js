@@ -12,13 +12,14 @@ import SearchPager from "./SearchPager"
 export default function SearchableSelectableResultsList(props) {
   /* props expected:
   * api: which discovery API to list results for
+  * itemsPerPage: number of items to show for each page, default 20
   * selectionCallback - callback to be called when a selection is made
   */
   const discoveryApi = new DiscoveryApi()
 
   // these will be used on the next fetch
   const [startIndex, setStartIndex] = useState(1)
-  const itemsPerPage = 20
+  const itemsPerPage = parseInt(props.itemsPerPage || "20")
   const [resultData, setResultData] = useState({})
   const [queryString, setQueryString] = useState("")
 
