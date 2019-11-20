@@ -1,17 +1,35 @@
-import React from 'react';
+import React from 'react'
+import {BrowserRouter as Router, Link, Redirect, Route, Switch} from "react-router-dom"
+import Chooser from "./Chooser"
+import Viewer from "./Viewer"
 import './App.css';
 
-import SearchableSelectableResultsList from './SearchableSelectableResultsList'
-
 function App() {
-  const handleSelection = (result) => {
-    console.log(`Selected: ${result.title}, ${result.url}`)
-  }
 
   return (
-    <div className="App">
-      <SearchableSelectableResultsList api="original" selectionCallback={handleSelection} />
-    </div>
+    <Router>
+      <nav>
+        <ul>
+          <li>
+            <Link to="/">Choose</Link>
+          </li>
+        </ul>
+      </nav>
+
+      <div className="App">
+        <Switch>
+          <Route exact path="/">
+            <Chooser/>
+          </Route>
+          <Route path="/viewer/:document">
+            <Viewer/>
+          </Route>
+          <Route>
+            <Redirect to="/"/>
+          </Route>
+        </Switch>
+      </div>
+    </Router>
   );
 }
 
