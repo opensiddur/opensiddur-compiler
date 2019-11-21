@@ -4,7 +4,7 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
-import SelectableResult from "./SelectableResult"
+import SelectableResult from "../SelectableResult"
 import {render} from "@testing-library/react"
 
 describe("SelectableResult", () => {

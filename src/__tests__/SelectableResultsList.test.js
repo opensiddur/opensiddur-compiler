@@ -5,7 +5,7 @@
  */
 import React from "react"
 import { render } from '@testing-library/react'
-import SelectableResultsList from "./SelectableResultsList"
+import SelectableResultsList from "../SelectableResultsList"
 
 describe("SelectableResultsList", () => {
   const selectionCallback = jest.fn(s => s)

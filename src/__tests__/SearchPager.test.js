@@ -6,7 +6,7 @@
 import React from "react"
 import { render, fireEvent, waitForElement } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import SearchPager, {SearchPagerLib} from "./SearchPager"
+import SearchPager, {SearchPagerLib} from "../SearchPager"
 
 describe("Search pager helper library", () => {
   const defaultWindow = 10

@@ -5,16 +5,16 @@
  */
 import React from "react"
 import {render, wait} from '@testing-library/react'
-import Chooser from "./Chooser"
+import Chooser from "../Chooser"
 import {Router} from "react-router-dom"
 import {createBrowserHistory, createMemoryHistory} from "history"
 import '@testing-library/jest-dom/extend-expect'
 
-import DiscoveryApi from "./DiscoveryApi"
+import DiscoveryApi from "../DiscoveryApi"
 import {waitForElement} from "@testing-library/dom"
 
 const mockDiscoveryList = jest.fn()
-jest.mock("./DiscoveryApi", () => {
+jest.mock("../DiscoveryApi", () => {
   return jest.fn().mockImplementation( () => {
     return {
       list: mockDiscoveryList

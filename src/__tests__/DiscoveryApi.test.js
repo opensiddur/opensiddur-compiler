@@ -1,4 +1,4 @@
-import DiscoveryApi from './DiscoveryApi.js'
+import DiscoveryApi from '../DiscoveryApi.js'
 
 it("correctly parses a valid discovery API HTML", () => {
   const html = `

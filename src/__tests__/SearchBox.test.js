@@ -5,7 +5,7 @@
 import React from 'react'
 import { render, fireEvent, waitForElement } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import SearchBox from "./SearchBox"
+import SearchBox from "../SearchBox"
 
 describe("SearchBox", () => {
   const mockQueryCallback = jest.fn(queryText => queryText)

@@ -8,11 +8,11 @@ import { render, fireEvent, wait } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom/extend-expect'
 
-import SearchableSelectableResultsList from "./SearchableSelectableResultsList"
-import DiscoveryApi from "./DiscoveryApi"
+import SearchableSelectableResultsList from "../SearchableSelectableResultsList"
+import DiscoveryApi from "../DiscoveryApi"
 
 const mockDiscoveryList = jest.fn()
-jest.mock("./DiscoveryApi", () => {
+jest.mock("../DiscoveryApi", () => {
   return jest.fn().mockImplementation( () => {
     return {
       list: mockDiscoveryList
