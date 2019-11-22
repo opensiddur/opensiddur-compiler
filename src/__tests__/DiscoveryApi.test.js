@@ -1,4 +1,5 @@
 import DiscoveryApi from '../DiscoveryApi.js'
+import {ApiError} from "../DiscoveryApi"
 
 it("correctly parses a valid discovery API HTML", () => {
   const html = `
@@ -151,40 +152,27 @@ describe("fetching data", () => {
   it("returns a failed promise if fetch returns a failed promise",  async () => {
     fetch.mockRejectOnce(mockNetworkError)
 
-    await expect(discoveryApi.list("discovery")).rejects.toMatchObject({
-      success: false,
-      error: "network error"
-    })
+    await expect(discoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "", "network error"))
 
   })
 
   it("returns a failed promise if fetch throws an exception", async () => {
     fetch.mockImplementation( () => { throw new Error("test error") } )
 
-    await expect(discoveryApi.list("discovery")).rejects.toMatchObject({
-      success: false,
-      error: "test error"
-    })
+    await expect(discoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "", "test error"))
 
   })
 
   it("returns a failed promise if the data are not parsable as a discovery API", async () => {
     fetch.mockResponseOnce(notDiscoveryHtml)
 
-    await expect(discoveryApi.list("discovery")).rejects.toMatchObject({
-      success: false,
-      status: "parse failed"
-    })
+    await expect(discoveryApi.list("discovery")).rejects.toMatchObject({success: false, status: "parse failed"})
   })
 
   it("returns a failed promise if fetch returns not OK",  async () => {
     fetch.mockResponseOnce("Bad request", { status: 400 })
 
-    await expect(discoveryApi.list("discovery")).rejects.toMatchObject({
-      success: false,
-      status: 400,
-      error: "Bad request"
-    })
+    await expect(discoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "400", "Bad request"))
 
   })
 

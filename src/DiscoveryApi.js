@@ -26,10 +26,44 @@
 
 const DEFAULT_ITEMS_PER_PAGE = 100
 
-export default class DiscoveryApi {
-  constructor() {
-
+export class ApiError {
+  constructor(success, status, error) {
+    this.success = success
+    this.status = status.toString()
+    this.error = error
   }
+}
+
+export class BaseApi {
+  async fetchText(url) {
+    let response
+    let responseText
+
+    try {
+      response = await fetch(url)
+      responseText = await response.text()
+    }
+    catch (error) {
+      throw new ApiError(false, "", error.message)
+    }
+
+    if (response.ok) {
+      try {
+        return responseText
+      }
+      catch (error) {
+        throw new ApiError(false, "parse failed", error.message)
+      }
+    }
+    else {
+      const status = response.status
+      // this is an API error
+      throw new ApiError(false, status, responseText)
+    }
+  }
+}
+
+export default class DiscoveryApi extends BaseApi {
 
   /* parse an HTML response object */
   parseDiscoveryHtml(responseText) {
@@ -89,51 +123,13 @@ export default class DiscoveryApi {
     Object.keys(params).forEach(key => {
       if (params[key] !== "") url.searchParams.append(key, params[key])
     })
+    let response
+    const responseText = await this.fetchText(url)
     try {
-      return fetch(url)
-        .catch ( typeError => {
-          // network error
-          return Promise.reject({
-            success: false,
-            status: "",
-            error: typeError.message
-          })
-        })
-        .then(response => {
-          if (response.ok) {
-            return response.text()
-          }
-          else {
-            const status = response.status
-            // this is an API error
-            return response.text().then(text => {
-              return Promise.reject({
-                success: false,
-                status: status,
-                error: text
-              })
-            })
-          }
-        })
-        .then( responseText => {
-          try {
-            return this.parseDiscoveryHtml(responseText)
-          }
-          catch (error) {
-            return Promise.reject({
-              success: false,
-              status: "parse failed",
-              error: error.message
-            })
-          }
-        })
+      return this.parseDiscoveryHtml(responseText)
     }
     catch (error) {
-      return Promise.reject({
-        success: false,
-        status: "",
-        error: error.message
-      })
+      throw new ApiError(false, "parse failed", error.message)
     }
   }
 }
