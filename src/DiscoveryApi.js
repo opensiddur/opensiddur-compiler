@@ -35,12 +35,18 @@ export class ApiError {
 }
 
 export class BaseApi {
-  async fetchText(url) {
+  async fetchText(url, format) {
     let response
     let responseText
 
+    const accept = (format === "xml") ? "application/xml" : "text/html"
+
     try {
-      response = await fetch(url)
+      response = await fetch(url, {
+        headers: {
+          "Accept": accept
+        }
+      })
       responseText = await response.text()
     }
     catch (error) {
