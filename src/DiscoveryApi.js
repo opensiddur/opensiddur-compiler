@@ -23,51 +23,9 @@
  Copyright 2019 Efraim Feinstein <efraim@opensiddur.org>
  Licensed under the GNU Lesser General Public License, version 3 or later
  */
+import BaseApi, {ApiError} from "./BaseApi"
 
 const DEFAULT_ITEMS_PER_PAGE = 100
-
-export class ApiError {
-  constructor(success, status, error) {
-    this.success = success
-    this.status = status.toString()
-    this.error = error
-  }
-}
-
-export class BaseApi {
-  async fetchText(url, format) {
-    let response
-    let responseText
-
-    const accept = (format === "xml") ? "application/xml" : "text/html"
-
-    try {
-      response = await fetch(url, {
-        headers: {
-          "Accept": accept
-        }
-      })
-      responseText = await response.text()
-    }
-    catch (error) {
-      throw new ApiError(false, "", error.message)
-    }
-
-    if (response.ok) {
-      try {
-        return responseText
-      }
-      catch (error) {
-        throw new ApiError(false, "parse failed", error.message)
-      }
-    }
-    else {
-      const status = response.status
-      // this is an API error
-      throw new ApiError(false, status, responseText)
-    }
-  }
-}
 
 export default class DiscoveryApi extends BaseApi {
 
@@ -129,8 +87,8 @@ export default class DiscoveryApi extends BaseApi {
     Object.keys(params).forEach(key => {
       if (params[key] !== "") url.searchParams.append(key, params[key])
     })
-    let response
-    const responseText = await this.fetchText(url)
+
+    const responseText = await this.fetchText(url, "html")
     try {
       return this.parseDiscoveryHtml(responseText)
     }

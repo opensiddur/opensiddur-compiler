@@ -1,5 +1,5 @@
 import DiscoveryApi from '../DiscoveryApi.js'
-import {ApiError} from "../DiscoveryApi"
+import {ApiError} from "../BaseApi"
 
 it("correctly parses a valid discovery API HTML", () => {
   const html = `
@@ -152,14 +152,14 @@ describe("fetching data", () => {
   it("returns a failed promise if fetch returns a failed promise",  async () => {
     fetch.mockRejectOnce(mockNetworkError)
 
-    await expect(discoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "", "network error"))
+    await expect(discoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "fetch failed", "network error"))
 
   })
 
   it("returns a failed promise if fetch throws an exception", async () => {
     fetch.mockImplementation( () => { throw new Error("test error") } )
 
-    await expect(discoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "", "test error"))
+    await expect(discoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "fetch failed", "test error"))
 
   })
 

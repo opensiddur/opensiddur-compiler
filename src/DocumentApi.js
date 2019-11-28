@@ -4,8 +4,7 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React from "react"
-import BaseApi, {ApiError} from "./DiscoveryApi"
+import BaseApi, {ApiError} from "./BaseApi"
 
 export default class DocumentApi extends BaseApi {
 
