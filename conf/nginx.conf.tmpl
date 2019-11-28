@@ -17,7 +17,7 @@ server {
         proxy_read_timeout          600;
         send_timeout                600;
 
-        root ${INSTALL_DIR};
+        root ${INSTALL_DIR}/build;
 
         location /api {
             proxy_pass https://${DB_DNS_NAME}$request_uri;
