@@ -14,18 +14,21 @@ export default class DocumentApi extends BaseApi {
    * @param api default to "original"
    * @return A promise to the document
    */
-  async get(documentName, format, api) {
-    const thisApi = api || "original"
-    const apiSuffix = (thisApi === "original") ? "/combined" : ""
-    const url = new URL(`/api/data/${thisApi}/${documentName}${apiSuffix}`, window.location.origin)
+  async get(documentName, format="xml", api="original") {
+    const apiSuffix = (api === "original") ? "/combined" : ""
+    const url = new URL(`/api/data/${api}/${documentName}${apiSuffix}`, window.location.origin)
     const parseFormat = (format === "xml") ? "application/xml" : "text/html"
 
     const textDoc = await this.fetchText(url, format)
-    try {
-      return new DOMParser().parseFromString(textDoc, parseFormat)
+
+    const markup = new DOMParser().parseFromString(textDoc, parseFormat)
+    const error = markup.querySelector("parsererror")
+
+    if (error === null) {
+      return markup
     }
-    catch (error) {
-      throw new ApiError(false, "parse error", error.message)
+    else {
+      throw new ApiError(false, "parse failed", error.textContent)
     }
   }
 }
