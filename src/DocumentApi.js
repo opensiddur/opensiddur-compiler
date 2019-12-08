@@ -12,10 +12,11 @@ export default class DocumentApi extends BaseApi {
    * @param documentName The document name, URL encoded
    * @param format "html" or "xml"
    * @param api default to "original"
+   * @param originalSuffix suffix to apply when api="original"; ignored in all other cases
    * @return A promise to the document
    */
-  async get(documentName, format="xml", api="original") {
-    const apiSuffix = (api === "original") ? "/combined" : ""
+  async get(documentName, format="xml", api="original", originalSuffix="combined") {
+    const apiSuffix = (api === "original") ? ("/" + originalSuffix) : ""
     const url = new URL(`/api/data/${api}/${documentName}${apiSuffix}`, window.location.origin)
     const parseFormat = (format === "xml") ? "application/xml" : "text/html"
 

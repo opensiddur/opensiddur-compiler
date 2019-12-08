@@ -85,7 +85,7 @@ describe("ViewTransformer component", () => {
     await wait()
     expect(mockGetFragment).toHaveBeenCalledTimes(1)
     expect(mockGetFragment.mock.calls[0][0]).toBe(fragName)
-    
+
     expect(mockTransform).toHaveBeenCalledTimes(1)
     await wait()
     expect(getByText("Transformed")).toBeInTheDocument()

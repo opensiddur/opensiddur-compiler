@@ -3,7 +3,8 @@
  * props:
  * * document: The document name (URL encoded)
  * * fragment: The document fragment (URL encoded)
- * * settings: Record of conditional settings [not yet implemented]
+ * * metadata: Metadata associated with the
+ * * * inline: Whether the transformer should read only elements in streams or all hierarchy
  * Copyright 2019 Efraim Feinstein <efraim@opensiddur.org>
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
@@ -20,8 +21,8 @@ export default function ViewTransformer(props) {
 
   const [content, setContent] = useState(<div>Loading...</div>)
 
-  const transformerRecursionFunction = (document, fragment) => {
-    return <ViewTransformer document={document} fragment={fragment}/>
+  const transformerRecursionFunction = (document, fragment, metadata) => {
+    return <ViewTransformer document={document} fragment={fragment} metadata={metadata}/>
   }
 
   const updateDocument = () => {
@@ -31,7 +32,7 @@ export default function ViewTransformer(props) {
       const transformer = new Transformer(docContent, props.document, transformerRecursionFunction)
       const contentToTransform = fragment ? transformer.getFragment(fragment) : docContent
 
-      setContent(transformer.transform(contentToTransform))
+      setContent(transformer.transform(contentToTransform, props.metadata))
     }
     fetcher()
   }

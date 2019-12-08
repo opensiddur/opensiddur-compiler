@@ -43,6 +43,18 @@ describe("document API", () => {
     spy.mockRestore()
   })
 
+  it("should fetch and parse an original document from a custom suffix", async () => {
+    const spy = jest.spyOn(documentApi, 'fetchText').mockResolvedValue(parsableXml)
+
+    const result = await documentApi.get(mockDocumentName, "xml", "original", "suffix")
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy.mock.calls[0][0]).toMatchObject(
+      new URL(`https://test.example.com/api/data/original/${mockDocumentName}/suffix`))
+    expect(result.documentElement.tagName).toBe("testXml")
+
+    spy.mockRestore()
+  })
+
   it("should fetch and parse a document from any other API (say, html)", async () => {
     const spy = jest.spyOn(documentApi, 'fetchText').mockResolvedValue(parsableHtml)
 
