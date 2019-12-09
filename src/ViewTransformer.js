@@ -31,7 +31,7 @@ export default function ViewTransformer(props) {
       docContent.normalize()
       const transformer = new Transformer(docContent, props.document, transformerRecursionFunction)
       const contentToTransform = fragment ? transformer.getFragment(fragment) : [docContent]
-      const transformed = contentToTransform.map( (nd) => { return transformer.transform(nd, props.metadata) } )
+      const transformed = contentToTransform.map( (nd) => { return transformer.apply(nd, props.metadata) } )
 
       setContent(transformed)
     }

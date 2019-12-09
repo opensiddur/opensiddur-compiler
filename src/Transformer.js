@@ -6,11 +6,10 @@
 import React from "react"
 
 // TODO:
+// test context switching
 // test transform()
-// add tracking of language on new document
-// add tracking of language on new element
-// add tracking of text direction on new document
-// add tracking of text direction on new element
+// add tracking of text direction on new document?
+// add tracking of text direction on new element?
 // add tracking of license metadata on new document
 // add license metadata to a global list
 // add tracking of contributors by document
@@ -19,9 +18,10 @@ import React from "react"
 // add tracking of sources in a global list
 // display license, contributor, source lists at the end of the document [not in this class]
 // add support for tracking settings via jf:set and metadata to a global list
-// add support for live conditional evaluation v
+// add support for live conditional evaluation 
 // add support for notes (external)
 // add support for instructions
+// add styling
 
 export const META_INLINE_MODE = "inline"
 export const META_LANG = "lang"
@@ -169,23 +169,25 @@ export default class Transformer {
   }
 
   /** update the "lang" metadata, dependent on the given XML
-   * @return a new metadata structure, if necessary
+   * @param newContext We are entering a new context.
+   * @return a structure including the next metadata structure and an update attribute, if necessary
    * */
-  updateLanguage(xml, metadata) {
+  updateLanguage(xml, metadata, newContext=false) {
     const oldLang = metadata.get(META_LANG)
-    const newLang = xml.hasAttribute("xml:lang") && xml.getAttribute("xml:lang")
+    const newLang = newContext ? this.contextLanguage(xml) :
+      (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("xml:lang") && xml.getAttribute("xml:lang"))
+    const needsChange = (newLang && (!oldLang || oldLang !== newLang))
 
-    if (newLang && (!oldLang || oldLang !== newLang)) {
-      return metadata.set(META_LANG, newLang)
+    return {
+      update: needsChange ? { lang: newLang} : null,
+      nextMetadata: needsChange ? metadata.set(META_LANG, newLang) : metadata
     }
-    else {
-      return metadata
-    }
+
   }
 
   /** @return the context language of the xml node, if available. If not, return null */
   contextLanguage(xml) {
-    if (xml.hasAttribute("xml:lang")) {
+    if (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("xml:lang")) {
       return xml.getAttribute("xml:lang")
     }
     else if (xml.parentElement != null) {
@@ -213,7 +215,9 @@ export default class Transformer {
       if (documentName === null) {
         // the fragment identifies a part of the same document, there is no need to reload
         const thisFragment = this.getFragment(parsedPtr.fragment)
-        content = thisFragment.map( (nd) => { return this.transform(nd, nextMetadata) } )
+        content = thisFragment.map( (newNode) => {
+          return this.apply(newNode, nextMetadata)
+        } )
       }
       else {
         content = this.recursionFunction(documentName, parsedPtr.fragment, nextMetadata)
@@ -269,28 +273,52 @@ export default class Transformer {
     }
   }
 
+  /** Perform a context switch (new document, skip to another part of the document)
+   * @param newContext new context node
+   * @param oldMetadata metadata before the context switch
+   * @param full true if a full context switch is required
+   * @param f function of newMetadata to perform on the switched context
+   * @return Nodes as processed by f and wrapped in a context switch, if necessary
+   */
+  contextSwitch(newContext, oldMetadata, full, f) {
+    const languageUpdate = this.updateLanguage(newContext, oldMetadata, full)
+    const nextMetadata = languageUpdate.nextMetadata
+
+    const result = f(nextMetadata)
+
+    if (languageUpdate.update != null) {
+      return (<div className="_context" {...languageUpdate.update}>{result}</div>)
+    }
+    else {
+      return result
+    }
+  }
+
   elementNode(xml, metadata) {
-    let returnValue
-    let nextMetadata = this.updateLanguage(xml, metadata)
+    const contextFunction = (nextMetadata) => {
+      let returnValue
 
-    if (metadata.get(META_INLINE_MODE) && !xml.hasAttribute("jf:stream")) {
-      // inline mode and the element is not inline... traverse children
-      returnValue = this.traverseChildren(xml, nextMetadata)
+      if (metadata.get(META_INLINE_MODE) && !xml.hasAttribute("jf:stream")) {
+        // inline mode and the element is not inline... traverse children
+        returnValue = this.traverseChildren(xml, nextMetadata)
+      }
+      else {
+        switch (xml.tagName) {
+          case "tei:teiHeader":
+            returnValue = this.teiHeader(xml, nextMetadata)
+            break
+          case "tei:ptr":
+            returnValue = this.teiPtr(xml, nextMetadata)
+            break
+          default:
+            returnValue = this.genericElement(xml, nextMetadata)
+            break
+        }
+      }
+      return returnValue
     }
 
-    switch (xml.tagName) {
-      case "tei:teiHeader":
-        returnValue = this.teiHeader(xml, nextMetadata)
-        break
-      case "tei:ptr":
-        returnValue = this.teiPtr(xml, nextMetadata)
-        break
-      default:
-        returnValue = this.genericElement(xml, nextMetadata)
-        break
-    }
-
-    return returnValue
+    return this.contextSwitch(xml, metadata, false, contextFunction)
   }
 
   /** transform an XML node from JLPTEI to React/HTML
@@ -318,6 +346,11 @@ export default class Transformer {
         console.log("wtf? ", xml)
         return []
     }
+  }
+
+  /** Apply a transform, including a context switch */
+  apply(xml, metadata=new TransformerMetadata()) {
+    return this.contextSwitch(xml, metadata, true, (newMeta) => { return this.transform(xml, newMeta) })
   }
 
 }

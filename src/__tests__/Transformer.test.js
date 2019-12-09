@@ -430,25 +430,25 @@ describe("Transformer.textNode", () => {
 describe("Transformer.updateLanguage", () => {
   const transformer = new Transformer(text2xml("<test/>"), "doc.xml", () => {})
 
-  it("returns the existing empty metadata when there is no lang metadata and no xml:lang", () => {
+  it("returns the existing empty metadata and no update when there is no lang metadata and no xml:lang", () => {
     const metadata = new TransformerMetadata().set("something", "else")
     const xml = text2xml(`<test>one</test>`).documentElement
     const result = transformer.updateLanguage(xml, metadata)
-    expect(result).toMatchObject(metadata)
+    expect(result).toMatchObject({ update: null, nextMetadata: metadata })
   })
 
   it("returns the existing lang metadata when there is no xml:lang attribute", () => {
     const metadata = new TransformerMetadata().set("something", "else").set(META_LANG, "en")
     const xml = text2xml(`<test>one</test>`).documentElement
     const result = transformer.updateLanguage(xml, metadata)
-    expect(result).toMatchObject(metadata)
+    expect(result).toMatchObject({ update: null, nextMetadata: metadata })
   })
 
   it("returns a new language when there is no lang metadata and an xml:lang attribute", () => {
     const metadata = new TransformerMetadata().set("something", "else")
     const xml = text2xml(`<test xml:lang="he">one</test>`).documentElement
     const result = transformer.updateLanguage(xml, metadata)
-    expect(result).toMatchObject(metadata.set(META_LANG, "he"))
+    expect(result).toMatchObject({ update: { lang: "he" }, nextMetadata: metadata.set(META_LANG, "he") })
   })
 
   it("returns a new language when there is lang metadata and a different xml:lang attribute", () => {
@@ -457,6 +457,20 @@ describe("Transformer.updateLanguage", () => {
     const heMetadata = metadata.set(META_LANG, "he")
     const xml = text2xml(`<test xml:lang="he">one</test>`).documentElement
     const result = transformer.updateLanguage(xml, enMetadata)
-    expect(result).toMatchObject(heMetadata)
+    expect(result).toMatchObject({ update: { lang: "he" }, nextMetadata: heMetadata })
+  })
+})
+
+describe("Transformer.elementNode", () => {
+  it("transforms according to the element's tag name", () => {
+
+  })
+
+  it("wraps the result in a _metadata div when the language changes", () => {
+
+  })
+
+  it("traverses children without any calls for the element node in inline mode", () => {
+
   })
 })

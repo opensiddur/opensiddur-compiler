@@ -16,6 +16,7 @@ const mockGetFragment = jest.fn()
 jest.mock("../Transformer", () => {
   return jest.fn().mockImplementation( () => {
     return {
+      apply: mockTransform,
       transform: mockTransform,
       getFragment: mockGetFragment
     }
