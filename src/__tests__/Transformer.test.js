@@ -7,7 +7,7 @@ import React from "react"
 import { render } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
-import Transformer, {ParsedPtr, TransformerMetadata} from "../Transformer"
+import Transformer, {META_LANG, ParsedPtr, TransformerMetadata} from "../Transformer"
 
 const text2xml = (txt) => {
   return new DOMParser().parseFromString(txt, "application/xml")
@@ -134,7 +134,7 @@ describe("Transformer.getFragment", () => {
   transformer.getRange = mockGetRange
 
   const mockFragment = text2xml("<div>id</div>")
-  const mockRange = text2xml("<div>range</div>")
+  const mockRange = [text2xml("<div>range</div>")]
 
   beforeEach( () => {
     mockGetId.mockReturnValueOnce(mockFragment)
@@ -150,7 +150,7 @@ describe("Transformer.getFragment", () => {
     const result = transformer.getFragment("fragment")
     expect(mockGetId).toHaveBeenCalledTimes(1)
     expect(mockGetId.mock.calls[0][0]).toBe("fragment")
-    expect(result).toBe(mockFragment)
+    expect(result).toStrictEqual([mockFragment])
   })
 
   it("should return a range when given a range", () => {
@@ -221,7 +221,8 @@ describe("Transformer.teiPtr", () => {
   })
 
   it("should recurse to transform when the document is the same as the current document", () => {
-    const mockFragmentData = text2xml("<fragment>Fragment</fragment>")
+    const mockFragment = text2xml("<fragment>Fragment</fragment>")
+    const mockFragmentData = [mockFragment]
     mockGetFragment.mockReturnValueOnce(mockFragmentData)
     mockTransform.mockReturnValueOnce(<div>Transformed</div>)
     const xmlPtr = text2xml(
@@ -232,13 +233,14 @@ describe("Transformer.teiPtr", () => {
     expect(mockGetFragment.mock.calls[0][0]).toBe("fragmentInCurrentDocument")
 
     expect(mockTransform).toHaveBeenCalledTimes(1)
-    expect(mockTransform.mock.calls[0][0]).toBe(mockFragmentData)
+    expect(mockTransform.mock.calls[0][0]).toBe(mockFragment)
     expect(mockTransform.mock.calls[0][1]).toMatchObject(metadata)
     expect(getByText("Transformed")).toBeInTheDocument()
   })
 
   it("should recurse to recursionFunction when the document is not the same as the current document", () => {
-    const mockFragmentData = text2xml("<fragment>Fragment</fragment>")
+    const mockFragment = text2xml("<fragment>Fragment</fragment>")
+    const mockFragmentData = [mockFragment]
     mockGetFragment.mockReturnValueOnce(mockFragmentData)
     recursionFunction.mockReturnValueOnce(<div>Recursed</div>)
     const xmlPtr = text2xml(
@@ -253,7 +255,8 @@ describe("Transformer.teiPtr", () => {
   })
 
   it("should pass 'inline' metadata to transform if the pointer is declared to be inline", () => {
-    const mockFragmentData = text2xml("<fragment>Fragment</fragment>")
+    const mockFragment = text2xml("<fragment>Fragment</fragment>")
+    const mockFragmentData = [mockFragment]
     mockGetFragment.mockReturnValueOnce(mockFragmentData)
     mockTransform.mockReturnValueOnce(<div>Transformed</div>)
     const xmlPtr = text2xml(
@@ -264,14 +267,14 @@ describe("Transformer.teiPtr", () => {
     expect(mockGetFragment.mock.calls[0][0]).toBe("fragmentInCurrentDocument")
 
     expect(mockTransform).toHaveBeenCalledTimes(1)
-    expect(mockTransform.mock.calls[0][0]).toBe(mockFragmentData)
+    expect(mockTransform.mock.calls[0][0]).toBe(mockFragment)
     expect(mockTransform.mock.calls[0][1]).toMatchObject(new TransformerMetadata().set("inline", true))
     expect(getByText("Transformed")).toBeInTheDocument()
 
   })
 
   it("should pass 'inline' metadata to an external document if the pointer is declared to be inline", () => {
-    const mockFragmentData = text2xml("<fragment>Fragment</fragment>")
+    const mockFragmentData = [text2xml("<fragment>Fragment</fragment>")]
     mockGetFragment.mockReturnValueOnce(mockFragmentData)
     recursionFunction.mockReturnValueOnce(<div>Recursed</div>)
     const xmlPtr = text2xml(
@@ -422,4 +425,38 @@ describe("Transformer.textNode", () => {
   })
 
 
+})
+
+describe("Transformer.updateLanguage", () => {
+  const transformer = new Transformer(text2xml("<test/>"), "doc.xml", () => {})
+
+  it("returns the existing empty metadata when there is no lang metadata and no xml:lang", () => {
+    const metadata = new TransformerMetadata().set("something", "else")
+    const xml = text2xml(`<test>one</test>`).documentElement
+    const result = transformer.updateLanguage(xml, metadata)
+    expect(result).toMatchObject(metadata)
+  })
+
+  it("returns the existing lang metadata when there is no xml:lang attribute", () => {
+    const metadata = new TransformerMetadata().set("something", "else").set(META_LANG, "en")
+    const xml = text2xml(`<test>one</test>`).documentElement
+    const result = transformer.updateLanguage(xml, metadata)
+    expect(result).toMatchObject(metadata)
+  })
+
+  it("returns a new language when there is no lang metadata and an xml:lang attribute", () => {
+    const metadata = new TransformerMetadata().set("something", "else")
+    const xml = text2xml(`<test xml:lang="he">one</test>`).documentElement
+    const result = transformer.updateLanguage(xml, metadata)
+    expect(result).toMatchObject(metadata.set(META_LANG, "he"))
+  })
+
+  it("returns a new language when there is lang metadata and a different xml:lang attribute", () => {
+    const metadata = new TransformerMetadata().set("something", "else")
+    const enMetadata = metadata.set(META_LANG, "en")
+    const heMetadata = metadata.set(META_LANG, "he")
+    const xml = text2xml(`<test xml:lang="he">one</test>`).documentElement
+    const result = transformer.updateLanguage(xml, enMetadata)
+    expect(result).toMatchObject(heMetadata)
+  })
 })

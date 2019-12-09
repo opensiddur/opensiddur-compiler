@@ -23,6 +23,9 @@ import React from "react"
 // add support for notes (external)
 // add support for instructions
 
+export const META_INLINE_MODE = "inline"
+export const META_LANG = "lang"
+
 /** Holder for the result from @see Transformer.parsePtr */
 export class ParsedPtr {
   constructor(apiName=null, documentName=null, fragment=null) {
@@ -87,16 +90,56 @@ export default class Transformer {
 
     if (leftNode === rightNode) {
       // the whole "range" is actually 1 node
-      return leftNode
+      return [leftNode]
     }
     else {
-      // we return a DocumentFragment containing the range, which ideally would be a StaticRange
+      // Ideally, this would be a StaticRange
       // unfortunately, that is supported on fewer browsers
       const range = this.contextDocument.createRange()
       range.setStartBefore(leftNode)
       range.setEndAfter(rightNode)
 
-      return range.cloneContents()
+      // this code is derived from https://stackoverflow.com/questions/35475961/how-to-iterate-over-every-node-in-a-selected-range-in-javascript
+      // it should return the nodes in the range from their original context instead of as a document fragment
+      // like range.cloneContents()
+      const nodeIterator = document.createNodeIterator(
+        range.commonAncestorContainer,
+        NodeFilter.SHOW_ALL, // pre-filter
+        {
+          // custom filter
+          acceptNode: function (node) {
+            const inRange = range.intersectsNode(node)
+
+            return inRange ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+          }
+        }
+      );
+
+      let nodesInRange = []
+      let nodeSet = new Set()
+      while (nodeIterator.nextNode()) {
+        const thisNode = nodeIterator.referenceNode
+        const nodeCompareStart = leftNode.compareDocumentPosition(thisNode)
+        const nodeCompareEnd = rightNode.compareDocumentPosition(thisNode)
+
+        const isStartNode = nodeCompareStart === 0
+        const isEndNode = nodeCompareEnd === 0
+        const isBeforeStartNode = (nodeCompareStart & Node.DOCUMENT_POSITION_PRECEDING) > 0
+        const isAfterEndNode = (nodeCompareEnd & Node.DOCUMENT_POSITION_FOLLOWING) > 0 &&
+          (nodeCompareEnd & Node.DOCUMENT_POSITION_CONTAINED_BY) === 0
+
+        const keep = (isStartNode || isEndNode || (!isBeforeStartNode && !isAfterEndNode))
+
+        if (keep) {
+          if (!nodeSet.has(thisNode.parentNode)) {
+            nodesInRange.push(thisNode)
+          }
+          nodeSet = nodeSet.add(thisNode)
+        }
+
+      }
+
+      return nodesInRange
     }
   }
 
@@ -105,10 +148,13 @@ export default class Transformer {
       (x) => this.namespaceResolver(x), XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
   }
 
+  /** get a fragment
+   * @return a List[Node] containing the fragment
+   */
   getFragment(fragment) {
     return (fragment.startsWith("range")) ?
       this.getRange(fragment) :
-      this.getId(fragment)
+      [this.getId(fragment)]
   }
 
   parsePtr(ptrTarget) {
@@ -122,12 +168,38 @@ export default class Transformer {
     return new ParsedPtr(apiName, documentName, fragment)
   }
 
+  /** update the "lang" metadata, dependent on the given XML
+   * @return a new metadata structure, if necessary
+   * */
+  updateLanguage(xml, metadata) {
+    const oldLang = metadata.get(META_LANG)
+    const newLang = xml.hasAttribute("xml:lang") && xml.getAttribute("xml:lang")
+
+    if (newLang && (!oldLang || oldLang !== newLang)) {
+      return metadata.set(META_LANG, newLang)
+    }
+    else {
+      return metadata
+    }
+  }
+
+  /** @return the context language of the xml node, if available. If not, return null */
+  contextLanguage(xml) {
+    if (xml.hasAttribute("xml:lang")) {
+      return xml.getAttribute("xml:lang")
+    }
+    else if (xml.parentElement != null) {
+      return this.contextLanguage(xml.parentElement)
+    }
+    else return null
+  }
+
   /** handle tei:ptr elements */
   teiPtr(xml, metadata) {
     const type = xml.hasAttribute("type") && xml.attributes["type"].value
     const target = xml.attributes["target"].value
     const inline = type === "inline"
-    const nextMetadata = metadata.set("inline", inline)
+    const nextMetadata = metadata.set(META_INLINE_MODE, inline)
     console.log("ptr", target)
 
     if (type === "url") {
@@ -141,7 +213,7 @@ export default class Transformer {
       if (documentName === null) {
         // the fragment identifies a part of the same document, there is no need to reload
         const thisFragment = this.getFragment(parsedPtr.fragment)
-        content = this.transform(thisFragment, nextMetadata)
+        content = thisFragment.map( (nd) => { return this.transform(nd, nextMetadata) } )
       }
       else {
         content = this.recursionFunction(documentName, parsedPtr.fragment, nextMetadata)
@@ -186,7 +258,7 @@ export default class Transformer {
   }
 
   textNode(xml, metadata) {
-    if (metadata.get("inline") &&
+    if (metadata.get(META_INLINE_MODE) &&
       xml.parentNode.nodeType === Node.ELEMENT_NODE && // DocumentFragment does not have a parent element
       !xml.parentElement.hasAttribute("jf:stream")) {
       // ignore non-inline data in inline mode
@@ -197,12 +269,37 @@ export default class Transformer {
     }
   }
 
+  elementNode(xml, metadata) {
+    let returnValue
+    let nextMetadata = this.updateLanguage(xml, metadata)
+
+    if (metadata.get(META_INLINE_MODE) && !xml.hasAttribute("jf:stream")) {
+      // inline mode and the element is not inline... traverse children
+      returnValue = this.traverseChildren(xml, nextMetadata)
+    }
+
+    switch (xml.tagName) {
+      case "tei:teiHeader":
+        returnValue = this.teiHeader(xml, nextMetadata)
+        break
+      case "tei:ptr":
+        returnValue = this.teiPtr(xml, nextMetadata)
+        break
+      default:
+        returnValue = this.genericElement(xml, nextMetadata)
+        break
+    }
+
+    return returnValue
+  }
+
   /** transform an XML node from JLPTEI to React/HTML
    *
    * @param xml {Node} The XML node to start at
    * @param metadata {TransformerMetadata} Data that should be transferred through recursion
    *  inline: if true, we are including an inline ptr and all included text from stream-elements should be included,
    *    but non-stream children should not (no complex structure, just text).
+   *  lang: language code of the context
    * @returns {string|Array|[]|*|[]|undefined}
    */
   transform(xml, metadata=new TransformerMetadata()) {
@@ -213,19 +310,7 @@ export default class Transformer {
         console.log("document fragment node")
         return this.documentFragment(xml, metadata)
       case Node.ELEMENT_NODE:
-        if (metadata.get("inline") && !xml.hasAttribute("jf:stream")) {
-          // inline mode and the element is not inline... traverse children
-          return this.traverseChildren(xml, metadata)
-        }
-
-        switch (xml.tagName) {
-          case "tei:teiHeader":
-            return this.teiHeader(xml, metadata)
-          case "tei:ptr":
-            return this.teiPtr(xml, metadata)
-          default:
-            return this.genericElement(xml, metadata)
-        }
+        return this.elementNode(xml, metadata)
       case Node.TEXT_NODE:
         console.log("text node", xml)
         return this.textNode(xml, metadata)

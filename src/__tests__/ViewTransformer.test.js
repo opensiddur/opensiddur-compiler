@@ -71,7 +71,7 @@ describe("ViewTransformer component", () => {
 
   it("renders a requested transformed fragment", async () => {
     mockDocGet.mockResolvedValue(docContentXml)
-    mockGetFragment.mockReturnValueOnce(fragmentXml)
+    mockGetFragment.mockReturnValueOnce([fragmentXml])
     mockTransform.mockReturnValueOnce(transformedDocument)
 
     const { getByText } = render(<ViewTransformer document={docName} fragment={fragName}/>)
