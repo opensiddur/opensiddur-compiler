@@ -461,16 +461,58 @@ describe("Transformer.updateLanguage", () => {
   })
 })
 
-describe("Transformer.elementNode", () => {
-  it("transforms according to the element's tag name", () => {
+describe("Transformer.contextSwitch", () => {
+  const transformer = new Transformer(text2xml("<test/>"), "doc.xml", () => {})
+  const mockUpdateLanguage = jest.fn()
+  transformer.updateLanguage = mockUpdateLanguage
+  const mockOldMetadata = new TransformerMetadata().set("old", true)
+  const mockMetadata = new TransformerMetadata().set("mocked", true)
+  const newContext = text2xml("<newContext>new</newContext>").documentElement
+  const mockFReturn = <result/>
+  const mockF = jest.fn()
 
+  afterEach( () => {
+    mockF.mockReset()
+    mockUpdateLanguage.mockReset()
   })
 
-  it("wraps the result in a _metadata div when the language changes", () => {
+  it("returns a wrapper container when a context update has happened due to changed language", () => {
+    const mockLang = "new"
+    mockUpdateLanguage.mockReturnValue({ update: { "lang": mockLang }, nextMetadata: mockMetadata})
+    mockF.mockReturnValue(mockFReturn)
+    const { container } = render(transformer.contextSwitch(newContext, mockOldMetadata, true, mockF))
 
+    expect(mockUpdateLanguage).toHaveBeenCalledTimes(1)
+    expect(mockUpdateLanguage.mock.calls[0][0]).toMatchObject(newContext)
+    expect(mockUpdateLanguage.mock.calls[0][1]).toMatchObject(mockOldMetadata)
+    expect(mockUpdateLanguage.mock.calls[0][2]).toBe(true)
+
+    expect(mockF).toHaveBeenCalledTimes(1)
+    expect(mockF.mock.calls[0][0]).toMatchObject(mockMetadata)
+
+    const result = container.querySelector("div")
+    const resultChild = container.querySelector("div result")
+
+    expect(result).toBeInTheDocument()
+    expect(result.getAttribute("lang")).toBe(mockLang)
+    expect(result.children.length).toBe(1)
+    expect(resultChild).toBeInTheDocument()
   })
 
-  it("traverses children without any calls for the element node in inline mode", () => {
+  it("returns the return value of f when no context update has changed language", () => {
+    const mockLang = "new"
+    mockUpdateLanguage.mockReturnValue({ update: null, nextMetadata: mockMetadata})
+    mockF.mockReturnValue(mockFReturn)
+    const result = transformer.contextSwitch(newContext, mockOldMetadata, true, mockF)
 
+    expect(mockUpdateLanguage).toHaveBeenCalledTimes(1)
+    expect(mockUpdateLanguage.mock.calls[0][0]).toMatchObject(newContext)
+    expect(mockUpdateLanguage.mock.calls[0][1]).toMatchObject(mockOldMetadata)
+    expect(mockUpdateLanguage.mock.calls[0][2]).toBe(true)
+
+    expect(mockF).toHaveBeenCalledTimes(1)
+    expect(mockF.mock.calls[0][0]).toMatchObject(mockMetadata)
+
+    expect(result).toStrictEqual(mockFReturn)
   })
 })

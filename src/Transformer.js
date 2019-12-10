@@ -18,7 +18,7 @@ import React from "react"
 // add tracking of sources in a global list
 // display license, contributor, source lists at the end of the document [not in this class]
 // add support for tracking settings via jf:set and metadata to a global list
-// add support for live conditional evaluation 
+// add support for live conditional evaluation
 // add support for notes (external)
 // add support for instructions
 // add styling
