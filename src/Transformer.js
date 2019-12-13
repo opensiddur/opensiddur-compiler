@@ -4,9 +4,9 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
+import MetadataBox from "./MetadataBox"
 
 // TODO:
-// test context switching
 // test transform()
 // add tracking of text direction on new document?
 // add tracking of text direction on new element?
@@ -25,6 +25,7 @@ import React from "react"
 
 export const META_INLINE_MODE = "inline"
 export const META_LANG = "lang"
+export const META_LICENSE = "license"
 
 /** Holder for the result from @see Transformer.parsePtr */
 export class ParsedPtr {
@@ -196,6 +197,32 @@ export default class Transformer {
     else return null
   }
 
+  /** update the licensing metadata. License data can only change when the document has changed
+   * @return a structure indicating new metadata and the update
+   */
+  updateLicense(xml, metadata, full=false) {
+    const oldLicense = metadata.get(META_LICENSE)
+    const newLicense = full && this.contextLicense(xml)
+    const needsChange = full && (newLicense && (!oldLicense || oldLicense !== newLicense))
+
+    return {
+      update: needsChange ? {license: newLicense} : null,
+      nextMetadata: needsChange ? metadata.set(META_LICENSE, newLicense) : metadata
+    }
+  }
+
+  /** Get the license of a particular xml node
+   *
+   * @param xml The node
+   * @return A license URI
+   */
+  contextLicense(xml) {
+    const docNode = xml.ownerDocument
+    const licenseNode = docNode.querySelector("licence")
+    const licenseUri = licenseNode.getAttribute("target")
+    return licenseUri
+  }
+
   /** handle tei:ptr elements */
   teiPtr(xml, metadata) {
     const type = xml.hasAttribute("type") && xml.attributes["type"].value
@@ -282,12 +309,20 @@ export default class Transformer {
    */
   contextSwitch(newContext, oldMetadata, full, f) {
     const languageUpdate = this.updateLanguage(newContext, oldMetadata, full)
-    const nextMetadata = languageUpdate.nextMetadata
+    let nextMetadata = languageUpdate.nextMetadata
+
+    const licenseUpdate = this.updateLicense(newContext, nextMetadata, full)
+    nextMetadata = licenseUpdate.nextMetadata
 
     const result = f(nextMetadata)
 
-    if (languageUpdate.update != null) {
-      return (<div className="_context" {...languageUpdate.update}>{result}</div>)
+    const hasContextUpdate = languageUpdate.update || licenseUpdate.update
+
+    if (hasContextUpdate) {
+      return (<div className="_context" {...languageUpdate.update}>
+        <MetadataBox metadata={nextMetadata}/>
+        {result}
+      </div>)
     }
     else {
       return result

@@ -7,7 +7,7 @@ import React from "react"
 import { render } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
-import Transformer, {META_LANG, ParsedPtr, TransformerMetadata} from "../Transformer"
+import Transformer, {META_LANG, META_LICENSE, ParsedPtr, TransformerMetadata} from "../Transformer"
 
 const text2xml = (txt) => {
   return new DOMParser().parseFromString(txt, "application/xml")
@@ -202,6 +202,7 @@ describe("Transformer.teiPtr", () => {
   const mockTransform = jest.fn()
   const mockGetFragment = jest.fn()
   transformer.transform = mockTransform
+  transformer.apply = mockTransform
   transformer.getFragment = mockGetFragment
 
   afterEach( () => {
@@ -465,20 +466,25 @@ describe("Transformer.contextSwitch", () => {
   const transformer = new Transformer(text2xml("<test/>"), "doc.xml", () => {})
   const mockUpdateLanguage = jest.fn()
   transformer.updateLanguage = mockUpdateLanguage
+  const mockUpdateLicense = jest.fn()
+  transformer.updateLicense = mockUpdateLicense
+  const mockLicense = "http://creativecommons.org/publicdomain/zero/1.0"
   const mockOldMetadata = new TransformerMetadata().set("old", true)
-  const mockMetadata = new TransformerMetadata().set("mocked", true)
+  const mockMetadata = new TransformerMetadata().set("mocked", true).set(META_LICENSE, mockLicense)
   const newContext = text2xml("<newContext>new</newContext>").documentElement
-  const mockFReturn = <result/>
+  const mockFReturn = <div className="result"/>
   const mockF = jest.fn()
 
   afterEach( () => {
     mockF.mockReset()
     mockUpdateLanguage.mockReset()
+    mockUpdateLicense.mockReset()
   })
 
   it("returns a wrapper container when a context update has happened due to changed language", () => {
     const mockLang = "new"
     mockUpdateLanguage.mockReturnValue({ update: { "lang": mockLang }, nextMetadata: mockMetadata})
+    mockUpdateLicense.mockReturnValue({ update: null, nextMetadata: mockMetadata })
     mockF.mockReturnValue(mockFReturn)
     const { container } = render(transformer.contextSwitch(newContext, mockOldMetadata, true, mockF))
 
@@ -487,21 +493,28 @@ describe("Transformer.contextSwitch", () => {
     expect(mockUpdateLanguage.mock.calls[0][1]).toMatchObject(mockOldMetadata)
     expect(mockUpdateLanguage.mock.calls[0][2]).toBe(true)
 
+    expect(mockUpdateLicense).toHaveBeenCalledTimes(1)
+    expect(mockUpdateLicense.mock.calls[0][0]).toMatchObject(newContext)
+    expect(mockUpdateLicense.mock.calls[0][1]).toMatchObject(mockMetadata)
+    expect(mockUpdateLicense.mock.calls[0][2]).toBe(true)
+
     expect(mockF).toHaveBeenCalledTimes(1)
     expect(mockF.mock.calls[0][0]).toMatchObject(mockMetadata)
 
     const result = container.querySelector("div")
-    const resultChild = container.querySelector("div result")
+    const resultChild = container.querySelector("div .result")
+    const metadataBox = container.querySelector("div.MetadataBox")
 
     expect(result).toBeInTheDocument()
     expect(result.getAttribute("lang")).toBe(mockLang)
-    expect(result.children.length).toBe(1)
     expect(resultChild).toBeInTheDocument()
+    expect(metadataBox).toBeInTheDocument()
   })
 
   it("returns the return value of f when no context update has changed language", () => {
     const mockLang = "new"
     mockUpdateLanguage.mockReturnValue({ update: null, nextMetadata: mockMetadata})
+    mockUpdateLicense.mockReturnValue({ update: null, nextMetadata: mockMetadata })
     mockF.mockReturnValue(mockFReturn)
     const result = transformer.contextSwitch(newContext, mockOldMetadata, true, mockF)
 
@@ -509,6 +522,12 @@ describe("Transformer.contextSwitch", () => {
     expect(mockUpdateLanguage.mock.calls[0][0]).toMatchObject(newContext)
     expect(mockUpdateLanguage.mock.calls[0][1]).toMatchObject(mockOldMetadata)
     expect(mockUpdateLanguage.mock.calls[0][2]).toBe(true)
+
+    expect(mockUpdateLicense).toHaveBeenCalledTimes(1)
+    expect(mockUpdateLicense.mock.calls[0][0]).toMatchObject(newContext)
+    expect(mockUpdateLicense.mock.calls[0][1]).toMatchObject(mockMetadata)
+    expect(mockUpdateLicense.mock.calls[0][2]).toBe(true)
+
 
     expect(mockF).toHaveBeenCalledTimes(1)
     expect(mockF.mock.calls[0][0]).toMatchObject(mockMetadata)
