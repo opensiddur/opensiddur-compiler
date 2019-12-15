@@ -8,11 +8,9 @@ import TransformerMetadata, {MetadataUpdate, MetadataUpdateList} from "./Transfo
 import MetadataBox from "./MetadataBox"
 
 // TODO:
-// test MetadataBox (such as it is)
 // test transform()
 // add tracking of text direction on new document?
 // add tracking of text direction on new element?
-// add tracking of license metadata on new document
 // add license metadata to a global list
 // add tracking of contributors by document
 // add tracking of contributors in a global list
