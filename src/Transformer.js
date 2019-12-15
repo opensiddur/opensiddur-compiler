@@ -4,9 +4,11 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
+import TransformerMetadata, {MetadataUpdate, MetadataUpdateList} from "./TransformerMetadata"
 import MetadataBox from "./MetadataBox"
 
 // TODO:
+// test MetadataBox (such as it is)
 // test transform()
 // add tracking of text direction on new document?
 // add tracking of text direction on new element?
@@ -34,28 +36,6 @@ export class ParsedPtr {
     this.documentName = documentName
     this.fragment = fragment
   }
-}
-
-export class TransformerMetadata {
-  constructor(md) {
-    this.metadata = md ? this.deepCopy(md) : {}
-  }
-
-  /** Utility function to create a deep copy of an object */
-  deepCopy(obj) {
-    return JSON.parse(JSON.stringify(obj))
-  }
-
-  set(key, value) {
-    const newCopy = new TransformerMetadata(this.metadata)
-    newCopy.metadata[key] = value
-    return newCopy
-  }
-
-  get(key) {
-    return this.metadata[key]
-  }
-
 }
 
 /** Primary transformer class for one JLPTEI original XML to React
@@ -179,11 +159,10 @@ export default class Transformer {
       (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("xml:lang") && xml.getAttribute("xml:lang"))
     const needsChange = (newLang && (!oldLang || oldLang !== newLang))
 
-    return {
-      update: needsChange ? { lang: newLang} : null,
-      nextMetadata: needsChange ? metadata.set(META_LANG, newLang) : metadata
-    }
-
+    return new MetadataUpdate(
+      needsChange ? { lang: newLang} : null,
+      needsChange ? metadata.set(META_LANG, newLang) : metadata
+    )
   }
 
   /** @return the context language of the xml node, if available. If not, return null */
@@ -198,17 +177,17 @@ export default class Transformer {
   }
 
   /** update the licensing metadata. License data can only change when the document has changed
-   * @return a structure indicating new metadata and the update
+   * @return MetadataUpdate structure indicating new metadata and the update
    */
   updateLicense(xml, metadata, full=false) {
     const oldLicense = metadata.get(META_LICENSE)
     const newLicense = full && this.contextLicense(xml)
     const needsChange = full && (newLicense && (!oldLicense || oldLicense !== newLicense))
 
-    return {
-      update: needsChange ? {license: newLicense} : null,
-      nextMetadata: needsChange ? metadata.set(META_LICENSE, newLicense) : metadata
-    }
+    return new MetadataUpdate(
+      needsChange ? {license: newLicense} : null,
+      needsChange ? metadata.set(META_LICENSE, newLicense) : metadata
+    )
   }
 
   /** Get the license of a particular xml node
@@ -217,8 +196,8 @@ export default class Transformer {
    * @return A license URI
    */
   contextLicense(xml) {
-    const docNode = xml.ownerDocument
-    const licenseNode = docNode.querySelector("licence")
+    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
+    const licenseNode = docNode.getElementsByTagNameNS("http://www.tei-c.org/ns/1.0", "licence")[0]
     const licenseUri = licenseNode.getAttribute("target")
     return licenseUri
   }
@@ -268,7 +247,7 @@ export default class Transformer {
   }
 
   documentNode(xml, metadata) {
-    return this.transform(xml.documentElement)
+    return this.transform(xml.documentElement, metadata)
   }
 
   documentFragment(xml, metadata) {
@@ -308,19 +287,19 @@ export default class Transformer {
    * @return Nodes as processed by f and wrapped in a context switch, if necessary
    */
   contextSwitch(newContext, oldMetadata, full, f) {
-    const languageUpdate = this.updateLanguage(newContext, oldMetadata, full)
-    let nextMetadata = languageUpdate.nextMetadata
+    let updates = []
+    updates.unshift(this.updateLanguage(newContext, oldMetadata, full))
+    updates.unshift(this.updateLicense(newContext, updates[0].nextMetadata, full))
 
-    const licenseUpdate = this.updateLicense(newContext, nextMetadata, full)
-    nextMetadata = licenseUpdate.nextMetadata
+    const result = f(updates[0].nextMetadata)
 
-    const result = f(nextMetadata)
-
-    const hasContextUpdate = languageUpdate.update || licenseUpdate.update
+    const contextUpdates = new MetadataUpdateList(updates)
+    const hasContextUpdate = contextUpdates.hasUpdates
 
     if (hasContextUpdate) {
-      return (<div className="_context" {...languageUpdate.update}>
-        <MetadataBox metadata={nextMetadata}/>
+      console.log("***context switch with update called from", newContext.nodeType, (newContext.nodeType === Node.ELEMENT_NODE) ? newContext.tagName:"not element")
+      return (<div className="_context" {...contextUpdates.language}>
+        <MetadataBox updates={contextUpdates}/>
         {result}
       </div>)
     }

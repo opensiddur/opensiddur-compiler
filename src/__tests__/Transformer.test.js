@@ -7,7 +7,8 @@ import React from "react"
 import { render } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
-import Transformer, {META_LANG, META_LICENSE, ParsedPtr, TransformerMetadata} from "../Transformer"
+import Transformer, {META_LANG, META_LICENSE, ParsedPtr} from "../Transformer"
+import TransformerMetadata from "../TransformerMetadata"
 
 const text2xml = (txt) => {
   return new DOMParser().parseFromString(txt, "application/xml")
@@ -459,6 +460,34 @@ describe("Transformer.updateLanguage", () => {
     const xml = text2xml(`<test xml:lang="he">one</test>`).documentElement
     const result = transformer.updateLanguage(xml, enMetadata)
     expect(result).toMatchObject({ update: { lang: "he" }, nextMetadata: heMetadata })
+  })
+})
+
+describe("Transformer.contextLicense", () => {
+  const transformer = new Transformer(text2xml("<test/>"), "doc.xml", () => {})
+  const CC0 = "http://creativecommons.org/publicdomain/zero/1.0"
+  const doc = text2xml(`<tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0">
+    <tei:teiHeader>
+        <tei:publicationStmt>
+            <tei:availability>
+                <tei:licence target="${CC0}"/>    
+            </tei:availability>
+        </tei:publicationStmt>
+    </tei:teiHeader>
+    <tei:body>
+        <tei:div xml:id="text">Text</tei:div>
+    </tei:body>
+  </tei:TEI>`)
+
+  it("returns the license URL from the document context", () => {
+    const lic = transformer.contextLicense(doc)
+    expect(lic).toBe(CC0)
+  })
+
+  it("returns the license URL from a subordinate element context", () => {
+    const elem = doc.getElementsByTagName("tei:div")[0]
+    const lic = transformer.contextLicense(elem)
+    expect(lic).toBe(CC0)
   })
 })
 

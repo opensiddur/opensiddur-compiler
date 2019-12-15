@@ -10,10 +10,12 @@ import {META_LICENSE} from "./Transformer"
 
 /** An HTML box that includes changed metadata
  *
- * @param props metadata: contains all metadata
+ * @param props updates: contains all metadata updates as a MetadataUpdateList objects
  */
 export default function MetadataBox(props) {
+  console.log("*** Metadata updates=", props)
+
   return (<div className="MetadataBox">
-    <SmallLicenseBox license={props.metadata.get(META_LICENSE)}/>
+    {props.updates.license && <SmallLicenseBox license={props.updates.license}/>}
   </div>)
 }
