@@ -47,10 +47,12 @@ export class MetadataUpdateList {
   constructor(updates = []) {
     this.license = null
     this.language = null
+    this.contributors = null
     updates.forEach( (mdUpdate) => {
       if (mdUpdate.update) {
         this.license = (!this.license && mdUpdate.update.license) ? mdUpdate.update : this.license
         this.language = (!this.language && mdUpdate.update.lang) ? mdUpdate.update : this.language
+        this.contributors = (!this.contributors && mdUpdate.update.contributors) ? mdUpdate.update : this.contributors
       }
     })
 

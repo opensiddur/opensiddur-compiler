@@ -26,6 +26,11 @@ import MetadataBox from "./MetadataBox"
 export const META_INLINE_MODE = "inline"
 export const META_LANG = "lang"
 export const META_LICENSE = "license"
+export const META_CONTRIBUTORS = "contributors"
+
+export const TEI_NS = "http://www.tei-c.org/ns/1.0"
+export const J_NS = "http://jewishliturgy.org/ns/jlptei/1.0"
+export const JF_NS = "http://jewishliturgy.org/ns/jlptei/flat/1.0"
 
 /** Holder for the result from @see Transformer.parsePtr */
 export class ParsedPtr {
@@ -49,10 +54,27 @@ export default class Transformer {
    */
   constructor(contextDocument, contextDocumentName, recursionFunction) {
     this.NAMESPACES = {
-      "tei": "http://www.tei-c.org/ns/1.0",
-      "j": "http://jewishliturgy.org/ns/jlptei/1.0",
-      "jf": "http://jewishliturgy.org/ns/jlptei/flat/1.0"
+      "tei": TEI_NS,
+      "j": J_NS,
+      "jf": JF_NS
     }
+    
+    this.CONTRIBUTOR_TYPES = {
+      "aut" : "Author",
+      "ann" : "Annotator",
+      "ctb" : "Contributor",
+      "cre" : "Creator",
+      "edt" : "Editor",
+      "fac" : "Facsimilist",
+      "fnd" : "Funder",
+      "mrk" : "Markup editor",
+      "oth" : "Other",
+      "pfr" : "Proofreader",
+      "spn" : "Sponsor",
+      "trc" : "Transcriber",
+      "trl" : "Translator"
+    }
+    
     this.contextDocument = contextDocument
     this.contextDocumentName = contextDocumentName
     this.recursionFunction = recursionFunction
@@ -195,9 +217,58 @@ export default class Transformer {
    */
   contextLicense(xml) {
     const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
-    const licenseNode = docNode.getElementsByTagNameNS("http://www.tei-c.org/ns/1.0", "licence")[0]
+    const licenseNode = docNode.getElementsByTagNameNS(TEI_NS, "licence")[0]
     const licenseUri = licenseNode.getAttribute("target")
     return licenseUri
+  }
+
+  /** update the contributors metadata, which can only change when the document has changed
+   *
+   * @param xml Node context
+   * @param metadata TransformerMetadata structure
+   * @param full boolean true if the document has been changed
+   * @return MetadataUpdate structure indicating new metadata and the update
+   */
+  updateContributors(xml, metadata, full=false) {
+    const newContributors = full && this.contextContributors(xml)
+    const needsChange = full && newContributors
+
+    return new MetadataUpdate(needsChange ? { contributors: newContributors } : null,
+      needsChange ? metadata.set(META_CONTRIBUTORS, newContributors) : metadata)
+  }
+
+  /** Pick up contributor data from the context
+   *
+   * @param xml Node in the context document
+   * @return Object A contributor structure consisting of type : [list of contributor URIs]
+   */
+  contextContributors(xml) {
+    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
+    const respStmts = docNode.getElementsByTagNameNS(TEI_NS, "respStmt")
+    const changes = docNode.getElementsByTagNameNS(TEI_NS, "change")
+
+    // iterate through all contributors and add them to the contributors by type
+    // if no type is given, assume their contributor type code is "edt" (editor)
+    const defaultContributorTypeCode = "edt"
+    const contributorsByType = {}
+    for (const contribType of Object.keys(this.CONTRIBUTOR_TYPES)) {
+      contributorsByType[contribType] = new Set()
+    }
+
+    for (const record of respStmts) {
+      const resp = record.getElementsByTagNameNS(TEI_NS, "resp")
+      const contribType = (resp.length > 0) ? resp[0].getAttribute("key") : defaultContributorTypeCode
+      // in each respStmt, there will be an element *not* called resp (it may be name or orgName) that has a @ref
+      // attribute with the contributor URI
+      const ref = record.querySelectorAll("*[ref]")[0].getAttribute("ref")
+      contributorsByType[contribType].add(ref)
+    }
+    for (const record of changes) {
+      const contribType = defaultContributorTypeCode
+      const who = record.getAttribute("who")
+      contributorsByType[contribType].add(who)
+    }
+    return contributorsByType
   }
 
   /** handle tei:ptr elements */
@@ -288,6 +359,7 @@ export default class Transformer {
     let updates = []
     updates.unshift(this.updateLanguage(newContext, oldMetadata, full))
     updates.unshift(this.updateLicense(newContext, updates[0].nextMetadata, full))
+    updates.unshift(this.updateContributors(newContext, updates[0].nextMetadata, full))
 
     const result = f(updates[0].nextMetadata)
 
@@ -295,7 +367,6 @@ export default class Transformer {
     const hasContextUpdate = contextUpdates.hasUpdates
 
     if (hasContextUpdate) {
-      console.log("***context switch with update called from", newContext.nodeType, (newContext.nodeType === Node.ELEMENT_NODE) ? newContext.tagName:"not element")
       return (<div className="_context" {...contextUpdates.language}>
         <MetadataBox updates={contextUpdates}/>
         {result}

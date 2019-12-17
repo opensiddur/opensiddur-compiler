@@ -41,7 +41,7 @@ describe("MetadataUpdateList", () => {
     expect(mdul.license).toMatchObject(licenseChange)
   })
 
-  it("records 1 update if only 1 update is provided", () => {
+  it("records 1 update if only 1 update (language) is provided", () => {
     const languageChange = { lang: "LA"}
     const mdul = new MetadataUpdateList([
       new MetadataUpdate(languageChange, null),
@@ -51,5 +51,15 @@ describe("MetadataUpdateList", () => {
     expect(mdul.hasUpdates).toBeTruthy()
     expect(mdul.language).toMatchObject(languageChange)
     expect(mdul.license).toBeFalsy()
+  })
+
+  it("records an update if contributors are updated", () => {
+    const contributorChange = { contributors: { "edt" : new Set("a")}}
+    const mdul = new MetadataUpdateList([
+      new MetadataUpdate(contributorChange, null)
+    ])
+
+    expect(mdul.hasUpdates).toBeTruthy()
+    expect(mdul.contributors).toMatchObject(contributorChange)
   })
 })
