@@ -23,13 +23,11 @@
  Copyright 2019 Efraim Feinstein <efraim@opensiddur.org>
  Licensed under the GNU Lesser General Public License, version 3 or later
  */
+import BaseApi, {ApiError} from "./BaseApi"
 
 const DEFAULT_ITEMS_PER_PAGE = 100
 
-export default class DiscoveryApi {
-  constructor() {
-
-  }
+export default class DiscoveryApi extends BaseApi {
 
   /* parse an HTML response object */
   parseDiscoveryHtml(responseText) {
@@ -89,51 +87,13 @@ export default class DiscoveryApi {
     Object.keys(params).forEach(key => {
       if (params[key] !== "") url.searchParams.append(key, params[key])
     })
+
+    const responseText = await this.fetchText(url, "html")
     try {
-      return fetch(url)
-        .catch ( typeError => {
-          // network error
-          return Promise.reject({
-            success: false,
-            status: "",
-            error: typeError.message
-          })
-        })
-        .then(response => {
-          if (response.ok) {
-            return response.text()
-          }
-          else {
-            const status = response.status
-            // this is an API error
-            return response.text().then(text => {
-              return Promise.reject({
-                success: false,
-                status: status,
-                error: text
-              })
-            })
-          }
-        })
-        .then( responseText => {
-          try {
-            return this.parseDiscoveryHtml(responseText)
-          }
-          catch (error) {
-            return Promise.reject({
-              success: false,
-              status: "parse failed",
-              error: error.message
-            })
-          }
-        })
+      return this.parseDiscoveryHtml(responseText)
     }
     catch (error) {
-      return Promise.reject({
-        success: false,
-        status: "",
-        error: error.message
-      })
+      throw new ApiError(false, "parse failed", error.message)
     }
   }
 }

@@ -1,4 +1,4 @@
-language: generic
+language: javascript
 git:
   depth: false
 branches:
@@ -43,6 +43,7 @@ before_install:
   - ssh-keygen -q -N "" -f ~/.ssh/google_compute_engine
 
 script:
+  - npm test
   - |
     gcloud compute \
       --project=${PROJECT_NAME} instances create ${INSTANCE_NAME} \

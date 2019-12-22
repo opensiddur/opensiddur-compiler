@@ -5,11 +5,16 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React from 'react'
+import React from "react"
 import {useParams} from "react-router"
+import ViewTransformer from "./ViewTransformer"
 
 export default function Viewer() {
-  const { document } = useParams()
+  const {document} = useParams()
+
   // just a placeholder
-  return <div className="Viewer">Document chosen: {document} </div>
+  return ( <div className="Viewer">
+    <h1>{document}</h1>
+    <ViewTransformer document={document}/>
+  </div>)
 }
