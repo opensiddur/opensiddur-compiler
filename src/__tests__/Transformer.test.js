@@ -7,7 +7,7 @@ import React from "react"
 import { render } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
-import Transformer, {META_LANG, META_LICENSE, ParsedPtr} from "../Transformer"
+import Transformer, {DOCUMENT_CONTEXT_SWITCH, META_LANG, META_LICENSE, ParsedPtr} from "../Transformer"
 import TransformerMetadata from "../TransformerMetadata"
 
 const text2xml = (txt) => {
@@ -519,7 +519,7 @@ describe("Transformer.contextSwitch", () => {
     mockUpdateLicense.mockReturnValue({ update: null, nextMetadata: mockMetadata })
     mockUpdateContributors.mockReturnValue({ update: null, nextMetadata: mockMetadata })
     mockF.mockReturnValue(mockFReturn)
-    const { container } = render(transformer.contextSwitch(newContext, mockOldMetadata, true, mockF))
+    const { container } = render(transformer.contextSwitch(newContext, mockOldMetadata, DOCUMENT_CONTEXT_SWITCH, mockF))
 
     expect(mockUpdateLanguage).toHaveBeenCalledTimes(1)
     expect(mockUpdateLanguage.mock.calls[0][0]).toMatchObject(newContext)
@@ -555,7 +555,7 @@ describe("Transformer.contextSwitch", () => {
     mockUpdateLicense.mockReturnValue({ update: null, nextMetadata: mockMetadata })
     mockUpdateContributors.mockReturnValue({ update: null, nextMetadata: mockMetadata })
     mockF.mockReturnValue(mockFReturn)
-    const result = transformer.contextSwitch(newContext, mockOldMetadata, true, mockF)
+    const result = transformer.contextSwitch(newContext, mockOldMetadata, DOCUMENT_CONTEXT_SWITCH, mockF)
 
     expect(mockUpdateLanguage).toHaveBeenCalledTimes(1)
     expect(mockUpdateLanguage.mock.calls[0][0]).toMatchObject(newContext)

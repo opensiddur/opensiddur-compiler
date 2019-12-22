@@ -17,6 +17,7 @@ jest.mock("../Transformer", () => {
   return jest.fn().mockImplementation( () => {
     return {
       apply: mockTransform,
+      applyList: mockTransform,
       transform: mockTransform,
       getFragment: mockGetFragment
     }

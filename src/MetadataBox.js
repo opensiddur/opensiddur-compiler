@@ -6,6 +6,7 @@
 import React from "react"
 
 import SmallLicenseBox from "./SmallLicenseBox"
+import ContributorList from "./ContributorList"
 
 /** An HTML box that includes changed metadata
  *
@@ -16,5 +17,6 @@ export default function MetadataBox(props) {
 
   return (<div className="MetadataBox">
     {props.updates.license && <SmallLicenseBox license={props.updates.license.license}/>}
+    {props.updates.contributors && <ContributorList contributors={props.updates.contributors.contributors} />}
   </div>)
 }

@@ -28,6 +28,13 @@ export const META_LANG = "lang"
 export const META_LICENSE = "license"
 export const META_CONTRIBUTORS = "contributors"
 
+/** indicates a context switch of an element in document order */
+export const ELEMENT_CONTEXT_SWITCH = 0
+/** indicates a context switch of an element out of document order (to a new location) */
+export const LOCATION_CONTEXT_SWITCH = 1
+/** indicates a context switch of an entire document */
+export const DOCUMENT_CONTEXT_SWITCH = 2
+
 export const TEI_NS = "http://www.tei-c.org/ns/1.0"
 export const J_NS = "http://jewishliturgy.org/ns/jlptei/1.0"
 export const JF_NS = "http://jewishliturgy.org/ns/jlptei/flat/1.0"
@@ -291,7 +298,7 @@ export default class Transformer {
         // the fragment identifies a part of the same document, there is no need to reload
         const thisFragment = this.getFragment(parsedPtr.fragment)
         content = thisFragment.map( (newNode) => {
-          return this.apply(newNode, nextMetadata)
+          return this.apply(newNode, nextMetadata, LOCATION_CONTEXT_SWITCH)
         } )
       }
       else {
@@ -351,15 +358,15 @@ export default class Transformer {
   /** Perform a context switch (new document, skip to another part of the document)
    * @param newContext new context node
    * @param oldMetadata metadata before the context switch
-   * @param full true if a full context switch is required
+   * @param contextSwitchLevel One of ELEMENT_CONTEXT_SWITCH, LOCATION_CONTEXT_SWITCH or DOCUMENT_CONTEXT_SWITCH
    * @param f function of newMetadata to perform on the switched context
    * @return Nodes as processed by f and wrapped in a context switch, if necessary
    */
-  contextSwitch(newContext, oldMetadata, full, f) {
+  contextSwitch(newContext, oldMetadata, contextSwitchLevel, f) {
     let updates = []
-    updates.unshift(this.updateLanguage(newContext, oldMetadata, full))
-    updates.unshift(this.updateLicense(newContext, updates[0].nextMetadata, full))
-    updates.unshift(this.updateContributors(newContext, updates[0].nextMetadata, full))
+    updates.unshift(this.updateLanguage(newContext, oldMetadata, contextSwitchLevel >= LOCATION_CONTEXT_SWITCH))
+    updates.unshift(this.updateLicense(newContext, updates[0].nextMetadata, contextSwitchLevel >= DOCUMENT_CONTEXT_SWITCH))
+    updates.unshift(this.updateContributors(newContext, updates[0].nextMetadata, contextSwitchLevel >= DOCUMENT_CONTEXT_SWITCH))
 
     const result = f(updates[0].nextMetadata)
 
@@ -401,7 +408,7 @@ export default class Transformer {
       return returnValue
     }
 
-    return this.contextSwitch(xml, metadata, false, contextFunction)
+    return this.contextSwitch(xml, metadata, ELEMENT_CONTEXT_SWITCH, contextFunction)
   }
 
   /** transform an XML node from JLPTEI to React/HTML
@@ -431,9 +438,28 @@ export default class Transformer {
     }
   }
 
-  /** Apply a transform, including a context switch */
-  apply(xml, metadata=new TransformerMetadata()) {
-    return this.contextSwitch(xml, metadata, true, (newMeta) => { return this.transform(xml, newMeta) })
+  /** Apply a transform, including a context switch
+   * @param xml Node The node to begin applying from
+   * @param metadata TransformerMetadata initial metadata
+   * @param contextSwitchLevel int one of the context switch types
+   */
+  apply(xml, metadata=new TransformerMetadata(), contextSwitchLevel=DOCUMENT_CONTEXT_SWITCH) {
+    return this.contextSwitch(xml, metadata, contextSwitchLevel, (newMeta) => { return this.transform(xml, newMeta) })
+  }
+
+
+  /** Apply a transform, including a context switch to a list of nodes, treating the first as the major context switch
+   * @param xmlList Array[Node] The node to begin applying from
+   * @param metadata TransformerMetadata initial metadata
+   * @param contextSwitchLevel number one of the context switch types that the list of elements will receive,
+   *                           performed on the first element of the list
+   */
+  applyList(xmlList, metadata=new TransformerMetadata(), contextSwitchLevel=DOCUMENT_CONTEXT_SWITCH) {
+    return this.contextSwitch(xmlList[0], metadata, contextSwitchLevel, (newMeta) => {
+      return xmlList.map ( (xml) => {
+        return this.transform(xml, newMeta)
+      })
+    })
   }
 
 }
