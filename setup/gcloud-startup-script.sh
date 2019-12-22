@@ -50,7 +50,7 @@ then
     export DNS_NAME="compiler-dev.jewishliturgy.org"
     export DB_DNS_NAME="db-dev.jewishliturgy.org";
 fi
-INSTANCE_BASE=${PROJECT}-app-${BRANCH//\//-}
+INSTANCE_BASE=${PROJECT}-compiler-${BRANCH//\//-}
 
 echo "Installing dynamic DNS updater to update ${DNS_NAME}..."
 cat << EOF > /etc/ddclient.conf
