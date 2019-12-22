@@ -15,7 +15,7 @@ env:
     - INSTANCE_NAME=${INSTANCE_BASE}-${VERSION}
     - ZONE=us-west2-a
     - MACHINE_TYPE=g1-small
-    - IMAGE=ubuntu-1804-bionic-v20190918
+    - IMAGE=ubuntu-1804-bionic-v20191211
     - IMAGE_PROJECT=ubuntu-os-cloud
     - BOOT_DISK_SIZE_GB=10
     - SERVICE_ACCOUNT=opensiddur-deploy-1@opensiddur-client.iam.gserviceaccount.com
@@ -41,6 +41,7 @@ before_install:
   - gcloud auth activate-service-account --key-file=client-secret.json
   - gcloud config set project ${PROJECT_NAME}
   - ssh-keygen -q -N "" -f ~/.ssh/google_compute_engine
+  - npm install
 
 script:
   - npm test
