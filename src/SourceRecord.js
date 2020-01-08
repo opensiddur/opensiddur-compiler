@@ -4,12 +4,12 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React, {useEffect, useState} from "react"
-import SourceInfo from "./SourceInfo"
+import SourceInfo from "./ContextSourceInfo"
 import SourceApi from "./SourceApi"
 
 /** A record of a source
  *
- * @param props source: A SourceInfo structure
+ * @param props source: A ContextSourceInfo structure
  * @constructor
  */
 export default function SourceRecord(props) {

@@ -6,7 +6,7 @@
 import React from "react"
 import TransformerMetadata, {MetadataUpdate, MetadataUpdateList} from "./TransformerMetadata"
 import MetadataBox from "./MetadataBox"
-import {SourceInfo} from "./SourceInfo"
+import {ContextSourceInfo} from "./ContextSourceInfo"
 
 // TODO:
 // test transform()
@@ -298,7 +298,7 @@ export default class Transformer {
       const scopeFrom = (biblScope === null) ? null : biblScope.getAttribute("from")
       const scopeTo = (biblScope === null) ? null : biblScope.getAttribute("to")
       const scopeUnit = (biblScope === null) ? null : biblScope.getAttribute("unit")
-      sources.push(new SourceInfo(source, scopeUnit, scopeFrom, scopeTo))
+      sources.push(new ContextSourceInfo(source, scopeUnit, scopeFrom, scopeTo))
     }
     return sources.length > 0 ? sources: null
   }

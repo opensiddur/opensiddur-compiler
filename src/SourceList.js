@@ -11,7 +11,7 @@ import SourceRecord from "./SourceRecord"
 
 /** Show a list of sources
  *
- * @param props sources: A list of SourceInfo structures
+ * @param props sources: A list of ContextSourceInfo structures
  * @constructor
  */
 export default function SourceList(props) {
