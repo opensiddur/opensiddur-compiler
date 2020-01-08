@@ -6,6 +6,7 @@
 import React from "react"
 import TransformerMetadata, {MetadataUpdate, MetadataUpdateList} from "./TransformerMetadata"
 import MetadataBox from "./MetadataBox"
+import {SourceInfo} from "./SourceInfo"
 
 // TODO:
 // test transform()
@@ -294,12 +295,10 @@ export default class Transformer {
       const src = docNode.evaluate("tei:ptr[@type='bibl']/@target", bibl, nsResolver, XPathResult.STRING_TYPE).stringValue.split("/")
       const source = src[src.length - 1]
       const biblScope = docNode.evaluate("tei:biblScope", bibl, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE).singleNodeValue
-      const scope = {
-        "from": (biblScope === null) ? null : biblScope.getAttribute("from"),
-        "to": (biblScope === null) ? null : biblScope.getAttribute("to"),
-        "unit": (biblScope === null) ? null : biblScope.getAttribute("unit")
-      }
-      sources.push({"source": source, "scope": scope})
+      const scopeFrom = (biblScope === null) ? null : biblScope.getAttribute("from")
+      const scopeTo = (biblScope === null) ? null : biblScope.getAttribute("to")
+      const scopeUnit = (biblScope === null) ? null : biblScope.getAttribute("unit")
+      sources.push(new SourceInfo(source, scopeUnit, scopeFrom, scopeTo))
     }
     return sources.length > 0 ? sources: null
   }

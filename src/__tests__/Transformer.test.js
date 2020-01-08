@@ -9,6 +9,7 @@ import '@testing-library/jest-dom/extend-expect'
 
 import Transformer, {DOCUMENT_CONTEXT_SWITCH, META_LANG, META_LICENSE, ParsedPtr, TEI_NS} from "../Transformer"
 import TransformerMetadata from "../TransformerMetadata"
+import {SourceInfo} from "../SourceInfo"
 
 const text2xml = (txt) => {
   return new DOMParser().parseFromString(txt, "application/xml")
@@ -733,8 +734,8 @@ describe("Transformer.contextContributors", () => {
       const contextNodes = [docWithSources, docWithSources.getElementsByTagNameNS(TEI_NS, "div")[0]]
 
       const expectedResult = [
-        { "source": "Test%20Source%201", "scope" : { "unit": null, "from": null, "to": null } },
-        { "source": "Test%20Source%202", "scope": { "unit": "pages", "from": "5", "to": "10" }}
+        new SourceInfo("Test%20Source%201"),
+        new SourceInfo("Test%20Source%202", "pages", "5",  "10" )
       ]
 
       contextNodes.forEach((contextNode) => {
