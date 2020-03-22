@@ -142,7 +142,7 @@ export default class SourceApi extends BaseApi {
    * @return A promise to a Source containing the source information
    */
   async get(source) {
-    const url = new URL(`/api/sources/${source}`, window.location.origin)
+    const url = new URL(`/api/data/sources/${source}`, window.location.origin)
 
     const textDoc = await this.fetchText(url, "xml")
 

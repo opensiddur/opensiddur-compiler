@@ -351,7 +351,7 @@ describe("source API", () => {
     const result = await sourceApi.get(mockSourceName)
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy.mock.calls[0][0]).toMatchObject(
-      new URL(`https://test.example.com/api/sources/${mockSourceName}`))
+      new URL(`https://test.example.com/api/data/sources/${mockSourceName}`))
     expect(result).toMatchObject({
       source: { // this should be enough to tell us whether we got the right parsed document
         id: "ABook",

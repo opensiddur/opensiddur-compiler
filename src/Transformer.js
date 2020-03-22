@@ -40,6 +40,22 @@ export const TEI_NS = "http://www.tei-c.org/ns/1.0"
 export const J_NS = "http://jewishliturgy.org/ns/jlptei/1.0"
 export const JF_NS = "http://jewishliturgy.org/ns/jlptei/flat/1.0"
 
+export const CONTRIBUTOR_TYPES = {
+  "aut" : "Author",
+  "ann" : "Annotator",
+  "ctb" : "Contributor",
+  "cre" : "Creator",
+  "edt" : "Editor",
+  "fac" : "Facsimilist",
+  "fnd" : "Funder",
+  "mrk" : "Markup editor",
+  "oth" : "Other",
+  "pfr" : "Proofreader",
+  "spn" : "Sponsor",
+  "trc" : "Transcriber",
+  "trl" : "Translator"
+}
+
 /** Holder for the result from @see Transformer.parsePtr */
 export class ParsedPtr {
   constructor(apiName=null, documentName=null, fragment=null) {
@@ -65,22 +81,6 @@ export default class Transformer {
       "tei": TEI_NS,
       "j": J_NS,
       "jf": JF_NS
-    }
-    
-    this.CONTRIBUTOR_TYPES = {
-      "aut" : "Author",
-      "ann" : "Annotator",
-      "ctb" : "Contributor",
-      "cre" : "Creator",
-      "edt" : "Editor",
-      "fac" : "Facsimilist",
-      "fnd" : "Funder",
-      "mrk" : "Markup editor",
-      "oth" : "Other",
-      "pfr" : "Proofreader",
-      "spn" : "Sponsor",
-      "trc" : "Transcriber",
-      "trl" : "Translator"
     }
     
     this.contextDocument = contextDocument
@@ -259,7 +259,7 @@ export default class Transformer {
     // if no type is given, assume their contributor type code is "edt" (editor)
     const defaultContributorTypeCode = "edt"
     const contributorsByType = {}
-    for (const contribType of Object.keys(this.CONTRIBUTOR_TYPES)) {
+    for (const contribType of Object.keys(CONTRIBUTOR_TYPES)) {
       contributorsByType[contribType] = new Set()
     }
 
