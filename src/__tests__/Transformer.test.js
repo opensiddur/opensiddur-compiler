@@ -7,8 +7,9 @@ import React from "react"
 import { render } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
-import Transformer, {DOCUMENT_CONTEXT_SWITCH, META_LANG, META_LICENSE, ParsedPtr} from "../Transformer"
+import Transformer, {DOCUMENT_CONTEXT_SWITCH, META_LANG, META_LICENSE, ParsedPtr, TEI_NS} from "../Transformer"
 import TransformerMetadata from "../TransformerMetadata"
+import {ContextSourceInfo} from "../ContextSourceInfo"
 
 const text2xml = (txt) => {
   return new DOMParser().parseFromString(txt, "application/xml")
@@ -691,6 +692,60 @@ describe("Transformer.contextContributors", () => {
 
     const fromDocumentNode = transformer.contextContributors(doc)
     testExpectations(fromDocumentNode)
+  })
+
+  describe("Transformer.contextSources", () => {
+    it("returns empty list when the document has no listed sources", () => {
+      const docNoSources = text2xml(`<tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0">
+        <tei:teiHeader>
+            <tei:sourceDesc>                
+            </tei:sourceDesc>
+        </tei:teiHeader>
+        <tei:body>
+            <tei:div xml:id="text">Text!</tei:div>
+        </tei:body>
+      </tei:TEI>`)
+      const result = Transformer.contextSources(docNoSources)
+
+      expect(result).toBeNull()
+    })
+
+
+    it("returns a list of sources when the document has them", () => {
+      const docWithSources = text2xml(`<tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0">
+        <tei:teiHeader>
+            <tei:sourceDesc> 
+                <tei:bibl>
+                    <!-- this source has no scope -->
+                    <tei:ptr type="bibl" target="/data/sources/Test%20Source%201"/>
+                </tei:bibl>               
+                <tei:bibl>
+                        <tei:ptr type="bibl" target="/data/sources/Test%20Source%202"/>
+                        <tei:ptr type="somethingelse" target="somewhere_else"/>
+                        <tei:biblScope unit="pages" from="5" to="10"/>
+                </tei:bibl>
+            </tei:sourceDesc>
+        </tei:teiHeader>
+        <tei:body>
+            <tei:div xml:id="text">Text!</tei:div>
+        </tei:body>
+      </tei:TEI>`)
+      // the same result should come if we call from either a document or node context
+      const contextNodes = [docWithSources, docWithSources.getElementsByTagNameNS(TEI_NS, "div")[0]]
+
+      const expectedResult = [
+        new ContextSourceInfo("Test%20Source%201"),
+        new ContextSourceInfo("Test%20Source%202", "pages", "5",  "10" )
+      ]
+
+      contextNodes.forEach((contextNode) => {
+        const result = Transformer.contextSources(contextNode)
+
+        expect(result.length).toBe(2)
+        expect(result).toMatchObject(expectedResult)
+      })
+
+    })
   })
 
 })

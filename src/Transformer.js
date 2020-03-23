@@ -6,13 +6,13 @@
 import React from "react"
 import TransformerMetadata, {MetadataUpdate, MetadataUpdateList} from "./TransformerMetadata"
 import MetadataBox from "./MetadataBox"
+import {ContextSourceInfo} from "./ContextSourceInfo"
 
 // TODO:
 // test transform()
 // add tracking of text direction on new document?
 // add tracking of text direction on new element?
 // add license metadata to a global list
-// add tracking of contributors by document
 // add tracking of contributors in a global list
 // add tracking of sources by document
 // add tracking of sources in a global list
@@ -27,6 +27,7 @@ export const META_INLINE_MODE = "inline"
 export const META_LANG = "lang"
 export const META_LICENSE = "license"
 export const META_CONTRIBUTORS = "contributors"
+export const META_SOURCES = "sources"
 
 /** indicates a context switch of an element in document order */
 export const ELEMENT_CONTEXT_SWITCH = 0
@@ -38,6 +39,22 @@ export const DOCUMENT_CONTEXT_SWITCH = 2
 export const TEI_NS = "http://www.tei-c.org/ns/1.0"
 export const J_NS = "http://jewishliturgy.org/ns/jlptei/1.0"
 export const JF_NS = "http://jewishliturgy.org/ns/jlptei/flat/1.0"
+
+export const CONTRIBUTOR_TYPES = {
+  "aut" : "Author",
+  "ann" : "Annotator",
+  "ctb" : "Contributor",
+  "cre" : "Creator",
+  "edt" : "Editor",
+  "fac" : "Facsimilist",
+  "fnd" : "Funder",
+  "mrk" : "Markup editor",
+  "oth" : "Other",
+  "pfr" : "Proofreader",
+  "spn" : "Sponsor",
+  "trc" : "Transcriber",
+  "trl" : "Translator"
+}
 
 /** Holder for the result from @see Transformer.parsePtr */
 export class ParsedPtr {
@@ -64,22 +81,6 @@ export default class Transformer {
       "tei": TEI_NS,
       "j": J_NS,
       "jf": JF_NS
-    }
-    
-    this.CONTRIBUTOR_TYPES = {
-      "aut" : "Author",
-      "ann" : "Annotator",
-      "ctb" : "Contributor",
-      "cre" : "Creator",
-      "edt" : "Editor",
-      "fac" : "Facsimilist",
-      "fnd" : "Funder",
-      "mrk" : "Markup editor",
-      "oth" : "Other",
-      "pfr" : "Proofreader",
-      "spn" : "Sponsor",
-      "trc" : "Transcriber",
-      "trl" : "Translator"
     }
     
     this.contextDocument = contextDocument
@@ -182,7 +183,7 @@ export default class Transformer {
    * */
   updateLanguage(xml, metadata, newContext=false) {
     const oldLang = metadata.get(META_LANG)
-    const newLang = newContext ? this.contextLanguage(xml) :
+    const newLang = newContext ? Transformer.contextLanguage(xml) :
       (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("xml:lang") && xml.getAttribute("xml:lang"))
     const needsChange = (newLang && (!oldLang || oldLang !== newLang))
 
@@ -193,12 +194,12 @@ export default class Transformer {
   }
 
   /** @return the context language of the xml node, if available. If not, return null */
-  contextLanguage(xml) {
+  static contextLanguage(xml) {
     if (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("xml:lang")) {
       return xml.getAttribute("xml:lang")
     }
     else if (xml.parentElement != null) {
-      return this.contextLanguage(xml.parentElement)
+      return Transformer.contextLanguage(xml.parentElement)
     }
     else return null
   }
@@ -258,7 +259,7 @@ export default class Transformer {
     // if no type is given, assume their contributor type code is "edt" (editor)
     const defaultContributorTypeCode = "edt"
     const contributorsByType = {}
-    for (const contribType of Object.keys(this.CONTRIBUTOR_TYPES)) {
+    for (const contribType of Object.keys(CONTRIBUTOR_TYPES)) {
       contributorsByType[contribType] = new Set()
     }
 
@@ -277,6 +278,46 @@ export default class Transformer {
     }
     return contributorsByType
   }
+
+  /** Get a list of source URIs that are applicable to a given document
+   *
+   * @param xml Node A node within the document
+   * @return Array[Object] list of source relative URIs and the relevant scope, or null if no sources found
+   */
+  static contextSources(xml) {
+    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
+    const nsResolver = docNode.createNSResolver( docNode.documentElement)
+    const sourceIterator = docNode.evaluate("//tei:sourceDesc/tei:bibl", docNode,
+      nsResolver, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null)
+    let sources = []
+    for (let i = 0; i < sourceIterator.snapshotLength; i++) {
+      const bibl = sourceIterator.snapshotItem(i)
+      const src = docNode.evaluate("tei:ptr[@type='bibl']/@target", bibl, nsResolver, XPathResult.STRING_TYPE).stringValue.split("/")
+      const source = src[src.length - 1]
+      const biblScope = docNode.evaluate("tei:biblScope", bibl, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE).singleNodeValue
+      const scopeFrom = (biblScope === null) ? null : biblScope.getAttribute("from")
+      const scopeTo = (biblScope === null) ? null : biblScope.getAttribute("to")
+      const scopeUnit = (biblScope === null) ? null : biblScope.getAttribute("unit")
+      sources.push(new ContextSourceInfo(source, scopeUnit, scopeFrom, scopeTo))
+    }
+    return sources.length > 0 ? sources: null
+  }
+
+  /** update the sources metadata, which can only change when the document has changed
+   *
+   * @param xml Node context
+   * @param metadata TransformerMetadata structure
+   * @param full boolean true if the document has been changed
+   * @return MetadataUpdate structure indicating new metadata and the update
+   */
+  updateSources(xml, metadata, full=false) {
+    const newSources = full && Transformer.contextSources(xml)
+    const needsChange = full && newSources
+
+    return new MetadataUpdate(needsChange ? { sources: newSources } : null,
+      needsChange ? metadata.set(META_SOURCES, newSources) : metadata)
+  }
+
 
   /** handle tei:ptr elements */
   teiPtr(xml, metadata) {
@@ -367,6 +408,7 @@ export default class Transformer {
     updates.unshift(this.updateLanguage(newContext, oldMetadata, contextSwitchLevel >= LOCATION_CONTEXT_SWITCH))
     updates.unshift(this.updateLicense(newContext, updates[0].nextMetadata, contextSwitchLevel >= DOCUMENT_CONTEXT_SWITCH))
     updates.unshift(this.updateContributors(newContext, updates[0].nextMetadata, contextSwitchLevel >= DOCUMENT_CONTEXT_SWITCH))
+    updates.unshift(this.updateSources(newContext, updates[0].nextMetadata, contextSwitchLevel >= DOCUMENT_CONTEXT_SWITCH))
 
     const result = f(updates[0].nextMetadata)
 
