@@ -92,4 +92,28 @@ describe("ViewTransformer component", () => {
     await wait()
     expect(getByText("Transformed")).toBeInTheDocument()
   })
+
+  it("calls a specified API", async () => {
+    const apiName = "otherapi"
+
+    mockDocGet.mockResolvedValue(docContentXml)
+    mockGetFragment.mockReturnValueOnce([fragmentXml])
+    mockTransform.mockReturnValueOnce(transformedDocument)
+
+    const { getByText } = render(<ViewTransformer document={docName} fragment={fragName} api={apiName}/>)
+    expect(getByText(/Loading/i)).toBeInTheDocument()
+
+    expect(mockDocGet).toHaveBeenCalledTimes(1)
+    expect(mockDocGet.mock.calls[0][0]).toBe(docName)
+    expect(mockDocGet.mock.calls[0][1]).toBe("xml")
+    expect(mockDocGet.mock.calls[0][2]).toBe(apiName)
+
+    await wait()
+    expect(mockGetFragment).toHaveBeenCalledTimes(1)
+    expect(mockGetFragment.mock.calls[0][0]).toBe(fragName)
+
+    expect(mockTransform).toHaveBeenCalledTimes(1)
+    await wait()
+    expect(getByText("Transformed")).toBeInTheDocument()
+  })
 })

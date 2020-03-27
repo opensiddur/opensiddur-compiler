@@ -125,6 +125,28 @@ describe("Transformer.getId", () => {
     expect(result.children[0].tagName).toBe("tei:seg")
     expect(result.children[0].textContent).toBe("Test")
   })
+
+  it("should extract a node by xml:id", () => {
+    const xmlDocumentText = `
+      <tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0"
+               xmlns:jf="http://jewishliturgy.org/ns/jlptei/flat/1.0"
+               >
+           <tei:teiHeader/>
+           <tei:body>
+                <jf:unflattened>
+                    <tei:seg xml:id="tst">Test</tei:seg>
+                </jf:unflattened>
+           </tei:body>
+      </tei:TEI>
+    `
+    const xmlDocument = text2xml(xmlDocumentText)
+    xmlDocument.normalize()
+    const transformer = new Transformer(xmlDocument, "doc.xml", () => {})
+    const result = transformer.getId("tst")
+
+    expect(result.tagName).toBe("tei:seg")
+    expect(result.getAttribute("xml:id")).toBe("tst")
+  })
 })
 
 describe("Transformer.getFragment", () => {
@@ -748,4 +770,46 @@ describe("Transformer.contextContributors", () => {
     })
   })
 
+})
+
+describe("Transformer.jfAnnotation", () => {
+  it("recurses through the referenced annotation using the 'notes' API", () => {
+    const recursionFunction = jest.fn()
+    const metadata = new TransformerMetadata()
+    const doc = text2xml(`<tei:seg 
+    xmlns:tei="http://www.tei-c.org/ns/1.0" 
+    xmlns:jf="http://jewishliturgy.org/ns/jlptei/1.0/flat" 
+    jf:annotation="/data/notes/notationdocument#one">Data</tei:seg>`)
+    const xmlNode = doc.documentElement
+    const transformer = new Transformer(doc, "doc.xml", recursionFunction)
+    const result = transformer.jfAnnotation(xmlNode, metadata, "jf:annotation")
+
+    expect(recursionFunction).toHaveBeenCalledTimes(1)
+    expect(recursionFunction.mock.calls[0][0]).toBe("notationdocument")
+    expect(recursionFunction.mock.calls[0][1]).toBe("one")
+    expect(recursionFunction.mock.calls[0][2]).toBe(metadata)
+    expect(recursionFunction.mock.calls[0][3]).toBe("notes")
+  })
+})
+
+describe("Transformer.commonAttributes", () => {
+  const recursionFunction = jest.fn()
+
+  it("returns an empty list when there are no common attributes", () => {
+    const xmlDocument = text2xml("<test/>")
+    const transformer = new Transformer(xmlDocument, "doc.xml", recursionFunction)
+    const result = transformer.commonAttributes(xmlDocument.documentElement)
+
+    expect(result.length).toBe(0)
+    expect(recursionFunction).toHaveBeenCalledTimes(0)
+  })
+
+  it("calls the 'notes' recursion function when annotation is present", () => {
+    const xmlDocument = text2xml("<test xmlns:jf='http://jewishliturgy.org/ns/jlptei/1.0/flat' jf:annotation='/data/notes/x#a'/>")
+    const transformer = new Transformer(xmlDocument, "doc.xml", recursionFunction)
+    const result = transformer.commonAttributes(xmlDocument.documentElement)
+
+    expect(recursionFunction).toHaveBeenCalledTimes(1)
+    expect(recursionFunction.mock.calls[0][3]).toBe("notes")
+  })
 })

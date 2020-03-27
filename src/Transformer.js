@@ -7,6 +7,7 @@ import React from "react"
 import TransformerMetadata, {MetadataUpdate, MetadataUpdateList} from "./TransformerMetadata"
 import MetadataBox from "./MetadataBox"
 import {ContextSourceInfo} from "./ContextSourceInfo"
+import ViewTransformer from "./ViewTransformer"
 
 // TODO:
 // test transform()
@@ -39,6 +40,7 @@ export const DOCUMENT_CONTEXT_SWITCH = 2
 export const TEI_NS = "http://www.tei-c.org/ns/1.0"
 export const J_NS = "http://jewishliturgy.org/ns/jlptei/1.0"
 export const JF_NS = "http://jewishliturgy.org/ns/jlptei/flat/1.0"
+export const XML_NS = "http://www.w3.org/XML/1998/namespace"
 
 export const CONTRIBUTOR_TYPES = {
   "aut" : "Author",
@@ -74,13 +76,14 @@ export default class Transformer {
    * @param contextDocument The XML document
    * @param contextDocumentName The name of the document
    * @param recursionFunction A function to call when recursing to another document.
-   *        Its signature is recursionFunction(documentName, fragment, metadata)
+   *        Its signature is recursionFunction(documentName, fragment, metadata, apiName='original')
    */
   constructor(contextDocument, contextDocumentName, recursionFunction) {
     this.NAMESPACES = {
       "tei": TEI_NS,
       "j": J_NS,
-      "jf": JF_NS
+      "jf": JF_NS,
+      "xml": XML_NS
     }
     
     this.contextDocument = contextDocument
@@ -153,7 +156,7 @@ export default class Transformer {
   }
 
   getId(id) {
-    return this.contextDocument.evaluate(`//*[@jf:id='${id}']`, this.contextDocument,
+    return this.contextDocument.evaluate(`//*[@jf:id='${id}' or @xml:id='${id}']`, this.contextDocument,
       (x) => this.namespaceResolver(x), XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
   }
 
@@ -318,6 +321,22 @@ export default class Transformer {
       needsChange ? metadata.set(META_SOURCES, newSources) : metadata)
   }
 
+  /** handle common attributes that may return elements */
+  commonAttributes(xml, metadata) {
+    let returnValue = []
+    if (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("jf:annotation")) {
+      returnValue.push(this.jfAnnotation(xml, metadata))
+    }
+
+    return returnValue
+  }
+
+  /** handle annotations. The API of the annotation (/data/api...) is referenced in the given attribute */
+  jfAnnotation(xml, metadata, attribute="jf:annotation") {
+    const annotation = xml.getAttribute(attribute)
+    const parsedPtr = this.parsePtr(annotation)
+    return this.recursionFunction(parsedPtr.documentName, parsedPtr.fragment, metadata, "notes")
+  }
 
   /** handle tei:ptr elements */
   teiPtr(xml, metadata) {
@@ -352,7 +371,9 @@ export default class Transformer {
   }
 
   traverseChildren(xml, metadata) {
-    let parsedChildren = []
+    let attributeChildren = this.commonAttributes(xml, metadata)
+    let parsedChildren = attributeChildren
+
     if (xml.hasChildNodes()) {
       let children = xml.childNodes
 
