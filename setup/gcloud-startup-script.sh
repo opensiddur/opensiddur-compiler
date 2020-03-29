@@ -28,6 +28,9 @@ cd opensiddur-compiler
 git checkout ${BRANCH}
 export SRC=$(pwd)
 
+echo "Installing dependencies..."
+npm install
+
 echo "Building sources..."
 npm run build
 
