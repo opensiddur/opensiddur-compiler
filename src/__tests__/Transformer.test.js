@@ -10,10 +10,7 @@ import '@testing-library/jest-dom/extend-expect'
 import Transformer, {DOCUMENT_CONTEXT_SWITCH, META_LANG, META_LICENSE, ParsedPtr, TEI_NS} from "../Transformer"
 import TransformerMetadata from "../TransformerMetadata"
 import {ContextSourceInfo} from "../ContextSourceInfo"
-
-const text2xml = (txt) => {
-  return new DOMParser().parseFromString(txt, "application/xml")
-}
+import {text2xml} from "../TestUtils"
 
 // jsdom / jest document implementation does not support createRange yet, but there seems to be some hope that it
 // will happen soon (see https://github.com/jsdom/jsdom/pull/2719 ). For now, we'll ignore the range tests
@@ -40,8 +37,7 @@ describe.skip("Transformer.getRange", () => {
     `
     const xmlDocument = text2xml(xmlDocumentText)
     xmlDocument.normalize()
-    const transformer = new Transformer(xmlDocument, "doc.xml", () => {})
-    const result = transformer.getRange("range(part1,part2)")
+    const result = Transformer.getRange(xmlDocument, "range(part1,part2)")
 
     expect(result.childElementCount).toBe(4)
     const children = result.children
@@ -84,8 +80,7 @@ describe.skip("Transformer.getRange", () => {
     `
     const xmlDocument = text2xml(xmlDocumentText)
     xmlDocument.normalize()
-    const transformer = new Transformer(xmlDocument, "doc.xml", () => {})
-    const result = transformer.getRange("range(part1,part2)")
+    const result = Transformer.getRange(xmlDocument, "range(part1,part2)")
 
     // test that all of part1, part2, Two and Three exist in the range
     expect(result.querySelector("*[jf:id=part1]")).toBeInTheDocument()
@@ -114,8 +109,7 @@ describe("Transformer.getId", () => {
     `
     const xmlDocument = text2xml(xmlDocumentText)
     xmlDocument.normalize()
-    const transformer = new Transformer(xmlDocument, "doc.xml", () => {})
-    const result = transformer.getId("stream")
+    const result = Transformer.getId(xmlDocument, "stream")
 
     expect(result.childElementCount).toBe(1)
     const children = result.children
@@ -141,8 +135,7 @@ describe("Transformer.getId", () => {
     `
     const xmlDocument = text2xml(xmlDocumentText)
     xmlDocument.normalize()
-    const transformer = new Transformer(xmlDocument, "doc.xml", () => {})
-    const result = transformer.getId("tst")
+    const result = Transformer.getId(xmlDocument, "tst")
 
     expect(result.tagName).toBe("tei:seg")
     expect(result.getAttribute("xml:id")).toBe("tst")
@@ -151,11 +144,21 @@ describe("Transformer.getId", () => {
 
 describe("Transformer.getFragment", () => {
   const xmlDocument = text2xml("<test/>")
-  const transformer = new Transformer(xmlDocument, "doc.xml", () => {})
+  //const transformer = new Transformer(xmlDocument, "doc.xml", () => {})
   const mockGetId = jest.fn()
   const mockGetRange = jest.fn()
-  transformer.getId = mockGetId
-  transformer.getRange = mockGetRange
+  const realGetId = Transformer.getId
+  const realGetRange = Transformer.getRange
+
+  beforeAll( () => {
+    Transformer.getId = mockGetId
+    Transformer.getRange = mockGetRange
+  })
+
+  afterAll( () => {
+    Transformer.getId = realGetId
+    Transformer.getRange = realGetRange
+  })
 
   const mockFragment = text2xml("<div>id</div>")
   const mockRange = [text2xml("<div>range</div>")]
@@ -171,42 +174,42 @@ describe("Transformer.getFragment", () => {
   })
 
   it("should return a single fragment when given one id", () => {
-    const result = transformer.getFragment("fragment")
+    const result = Transformer.getFragment(xmlDocument,"fragment")
     expect(mockGetId).toHaveBeenCalledTimes(1)
-    expect(mockGetId.mock.calls[0][0]).toBe("fragment")
+    expect(mockGetId.mock.calls[0][1]).toBe("fragment")
     expect(result).toStrictEqual([mockFragment])
   })
 
   it("should return a range when given a range", () => {
-    const result = transformer.getFragment("range(left,right)")
+    const result = Transformer.getFragment(xmlDocument, "range(left,right)")
     expect(mockGetRange).toHaveBeenCalledTimes(1)
-    expect(mockGetRange.mock.calls[0][0]).toBe("range(left,right)")
+    expect(mockGetRange.mock.calls[0][1]).toBe("range(left,right)")
     expect(result).toBe(mockRange)
   })
 })
 
-describe("Transformer.parsePtr", () => {
+describe("ParsedPtr.parsePtr", () => {
   const xmlDocument = text2xml("<test/>")
-  const transformer = new Transformer(xmlDocument, "doc.xml", () => {})
 
   it("should handle a document and API only", () => {
-    const result = transformer.parsePtr("/data/original/DocumentDestination")
+    const result = ParsedPtr.parsePtr("/data/original/DocumentDestination")
     expect(result).toMatchObject(new ParsedPtr("original", "DocumentDestination"))
   })
 
   it("should handle a document and API and fragment", () => {
-    const result = transformer.parsePtr("/data/original/DocumentDestination#fragmentDestination")
+    const result = ParsedPtr.parsePtr("/data/original/DocumentDestination#fragmentDestination")
     expect(result).toMatchObject(
       new ParsedPtr("original", "DocumentDestination", "fragmentDestination"))
   })
 
   it("should handle a fragment only", () => {
-    const result = transformer.parsePtr("#fragmentDestination")
+    const result = ParsedPtr.parsePtr("#fragmentDestination")
     expect(result).toMatchObject(
       new ParsedPtr(null, null, "fragmentDestination"))
   })
 })
 
+/*
 describe("Transformer.namespaceResolver", () => {
   const xmlDocument = text2xml("<test/>")
   const transformer = new Transformer(xmlDocument, "doc.xml", () => {})
@@ -217,6 +220,7 @@ describe("Transformer.namespaceResolver", () => {
     expect(transformer.namespaceResolver("jf")).toBe("http://jewishliturgy.org/ns/jlptei/flat/1.0")
   })
 })
+*/
 
 describe("Transformer.teiPtr", () => {
   const metadata = new TransformerMetadata()
@@ -486,34 +490,6 @@ describe("Transformer.updateLanguage", () => {
   })
 })
 
-describe("Transformer.contextLicense", () => {
-  const transformer = new Transformer(text2xml("<test/>"), "doc.xml", () => {})
-  const CC0 = "http://creativecommons.org/publicdomain/zero/1.0"
-  const doc = text2xml(`<tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0">
-    <tei:teiHeader>
-        <tei:publicationStmt>
-            <tei:availability>
-                <tei:licence target="${CC0}"/>    
-            </tei:availability>
-        </tei:publicationStmt>
-    </tei:teiHeader>
-    <tei:body>
-        <tei:div xml:id="text">Text</tei:div>
-    </tei:body>
-  </tei:TEI>`)
-
-  it("returns the license URL from the document context", () => {
-    const lic = transformer.contextLicense(doc)
-    expect(lic).toBe(CC0)
-  })
-
-  it("returns the license URL from a subordinate element context", () => {
-    const elem = doc.getElementsByTagName("tei:div")[0]
-    const lic = transformer.contextLicense(elem)
-    expect(lic).toBe(CC0)
-  })
-})
-
 describe("Transformer.contextSwitch", () => {
   const transformer = new Transformer(text2xml("<test/>"), "doc.xml", () => {})
   const mockUpdateLanguage = jest.fn()
@@ -600,176 +576,6 @@ describe("Transformer.contextSwitch", () => {
 
     expect(result).toStrictEqual(mockFReturn)
   })
-})
-
-describe("Transformer.contextContributors", () => {
-  it("reads all contributors from the given context", () => {
-    const doc = text2xml(`<tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0">
-        <tei:teiHeader>
-            <tei:titleStmt>
-                <tei:respStmt>
-                    <tei:resp key="aut">Author</tei:resp>
-                    <tei:name ref="/user/AnAuthor">A Author</tei:name>                
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="ann">Annotator</tei:resp>
-                    <tei:name ref="/user/AnAnnotator">B Annotator</tei:name>                
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="ctb">Contributor</tei:resp>
-                    <tei:name ref="/user/AContributor">C Contributor</tei:name>                
-                </tei:respStmt>
-                <!-- for creators, we'll make sure of what happens when 2 are listed -->
-                <tei:respStmt>
-                    <tei:resp key="cre">Creator</tei:resp>
-                    <tei:name ref="/user/ACreator1">D Creator One</tei:name>                
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="cre">Creator</tei:resp>
-                    <tei:name ref="/user/BCreator2">E Creator Two</tei:name>                
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="edt">Editor</tei:resp>
-                    <tei:name ref="/user/AnEditor">F Editor</tei:name>                
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="fac">Facsimilist</tei:resp>
-                    <tei:orgName ref="/user/Facsimilist">Facsimilist Organization</tei:orgName>
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="fnd">Funder</tei:resp>
-                    <tei:orgName ref="/user/Funder">Funder Organization</tei:orgName>
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="mrk">Markup editor</tei:resp>
-                    <tei:name ref="/user/MarkupGuy">Markup Editor</tei:name>
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="oth">Other</tei:resp>
-                    <tei:name ref="/user/TheOtherGuy">Not Sure What He Did</tei:name>
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="pfr">Proofreader</tei:resp>
-                    <tei:name ref="/user/AProofreader">Proofreader</tei:name>
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="spn">Sponsor</tei:resp>
-                    <tei:orgName ref="/user/SponsorOrg">Sponsor Organization</tei:orgName>
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="trc">Transcriber</tei:resp>
-                    <tei:name ref="/user/ATranscriber">Transcriber</tei:name>
-                </tei:respStmt>
-                <tei:respStmt>
-                    <tei:resp key="trl">Translator</tei:resp>
-                    <tei:name ref="/user/ATranslator">Translator Gal</tei:name>
-                </tei:respStmt>
-            </tei:titleStmt>
-            <tei:revisionDesc>
-                <tei:change type="edited" who="/user/AnotherEditor">Edited by someone else</tei:change>
-                <tei:change type="edited" who="/user/AnEditor">Edited by same guy who edited</tei:change>
-                <tei:change type="created" who="/user/AnEditor">Created by the same guy who edited</tei:change>
-            </tei:revisionDesc>
-        </tei:teiHeader>
-        <tei:body>
-            <tei:div xml:id="text">Text!</tei:div>
-        </tei:body>
-    </tei:TEI>`)
-
-    const xmlNode = doc.getElementsByTagNameNS("http://www.tei-c.org/ns/1.0", "div")[0]
-    const transformer = new Transformer(doc, "doc.xml", () => {})
-
-    const testExpectations = (result) => {
-      expect(result.hasOwnProperty("aut")).toBeTruthy()
-      expect(result.hasOwnProperty("ann")).toBeTruthy()
-      expect(result.hasOwnProperty("ctb")).toBeTruthy()
-      expect(result.hasOwnProperty("cre")).toBeTruthy()
-      expect(result.hasOwnProperty("edt")).toBeTruthy()
-      expect(result.hasOwnProperty("fac")).toBeTruthy()
-      expect(result.hasOwnProperty("fnd")).toBeTruthy()
-      expect(result.hasOwnProperty("mrk")).toBeTruthy()
-      expect(result.hasOwnProperty("oth")).toBeTruthy()
-      expect(result.hasOwnProperty("pfr")).toBeTruthy()
-      expect(result.hasOwnProperty("spn")).toBeTruthy()
-      expect(result.hasOwnProperty("trc")).toBeTruthy()
-      expect(result.hasOwnProperty("trl")).toBeTruthy()
-      expect(result["aut"]).toMatchObject(new Set(["/user/AnAuthor"]))
-      expect(result["ann"]).toMatchObject(new Set(["/user/AnAnnotator"]))
-      expect(result["ctb"]).toMatchObject(new Set(["/user/AContributor"]))
-      expect(result["cre"]).toMatchObject(new Set(["/user/ACreator1", "/user/BCreator2"]))
-      expect(result["edt"]).toMatchObject(new Set(["/user/AnEditor", "/user/AnotherEditor"]))
-      expect(result["fac"]).toMatchObject(new Set(["/user/Facsimilist"]))
-      expect(result["fnd"]).toMatchObject(new Set(["/user/Funder"]))
-      expect(result["mrk"]).toMatchObject(new Set(["/user/MarkupGuy"]))
-      expect(result["oth"]).toMatchObject(new Set(["/user/TheOtherGuy"]))
-      expect(result["pfr"]).toMatchObject(new Set(["/user/AProofreader"]))
-      expect(result["spn"]).toMatchObject(new Set(["/user/SponsorOrg"]))
-      expect(result["trc"]).toMatchObject(new Set(["/user/ATranscriber"]))
-      expect(result["trl"]).toMatchObject(new Set(["/user/ATranslator"]))
-    }
-
-    const fromInsideNode = transformer.contextContributors(xmlNode)
-    testExpectations(fromInsideNode)
-
-
-    const fromDocumentNode = transformer.contextContributors(doc)
-    testExpectations(fromDocumentNode)
-  })
-
-  describe("Transformer.contextSources", () => {
-    it("returns empty list when the document has no listed sources", () => {
-      const docNoSources = text2xml(`<tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0">
-        <tei:teiHeader>
-            <tei:sourceDesc>                
-            </tei:sourceDesc>
-        </tei:teiHeader>
-        <tei:body>
-            <tei:div xml:id="text">Text!</tei:div>
-        </tei:body>
-      </tei:TEI>`)
-      const result = Transformer.contextSources(docNoSources)
-
-      expect(result).toBeNull()
-    })
-
-
-    it("returns a list of sources when the document has them", () => {
-      const docWithSources = text2xml(`<tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0">
-        <tei:teiHeader>
-            <tei:sourceDesc> 
-                <tei:bibl>
-                    <!-- this source has no scope -->
-                    <tei:ptr type="bibl" target="/data/sources/Test%20Source%201"/>
-                </tei:bibl>               
-                <tei:bibl>
-                        <tei:ptr type="bibl" target="/data/sources/Test%20Source%202"/>
-                        <tei:ptr type="somethingelse" target="somewhere_else"/>
-                        <tei:biblScope unit="pages" from="5" to="10"/>
-                </tei:bibl>
-            </tei:sourceDesc>
-        </tei:teiHeader>
-        <tei:body>
-            <tei:div xml:id="text">Text!</tei:div>
-        </tei:body>
-      </tei:TEI>`)
-      // the same result should come if we call from either a document or node context
-      const contextNodes = [docWithSources, docWithSources.getElementsByTagNameNS(TEI_NS, "div")[0]]
-
-      const expectedResult = [
-        new ContextSourceInfo("Test%20Source%201"),
-        new ContextSourceInfo("Test%20Source%202", "pages", "5",  "10" )
-      ]
-
-      contextNodes.forEach((contextNode) => {
-        const result = Transformer.contextSources(contextNode)
-
-        expect(result.length).toBe(2)
-        expect(result).toMatchObject(expectedResult)
-      })
-
-    })
-  })
-
 })
 
 describe("Transformer.jfAnnotation", () => {

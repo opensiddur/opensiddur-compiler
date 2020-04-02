@@ -42,6 +42,13 @@ export const J_NS = "http://jewishliturgy.org/ns/jlptei/1.0"
 export const JF_NS = "http://jewishliturgy.org/ns/jlptei/flat/1.0"
 export const XML_NS = "http://www.w3.org/XML/1998/namespace"
 
+export const NAMESPACES = {
+  "tei": TEI_NS,
+  "j": J_NS,
+  "jf": JF_NS,
+  "xml": XML_NS
+}
+
 export const CONTRIBUTOR_TYPES = {
   "aut" : "Author",
   "ann" : "Annotator",
@@ -58,12 +65,23 @@ export const CONTRIBUTOR_TYPES = {
   "trl" : "Translator"
 }
 
-/** Holder for the result from @see Transformer.parsePtr */
+/** Parse a JLPTEI pointer */
 export class ParsedPtr {
   constructor(apiName=null, documentName=null, fragment=null) {
     this.apiName = apiName
     this.documentName = documentName
     this.fragment = fragment
+  }
+
+  static parsePtr(ptrTarget) {
+    const splitted = ptrTarget.split("#")
+    const documentPart = (splitted.length === 1) ? splitted.pop() : splitted[0]
+    const docSplit = documentPart.split("/")
+    const [documentName, apiName] = [
+      (documentPart === "") ? null : docSplit.pop(),
+      (documentPart === "") ? null : docSplit.pop()]
+    const fragment = (splitted.length === 1) ? null : splitted.pop()
+    return new ParsedPtr(apiName, documentName, fragment)
   }
 }
 
@@ -79,26 +97,29 @@ export default class Transformer {
    *        Its signature is recursionFunction(documentName, fragment, metadata, apiName='original')
    */
   constructor(contextDocument, contextDocumentName, recursionFunction) {
-    this.NAMESPACES = {
-      "tei": TEI_NS,
-      "j": J_NS,
-      "jf": JF_NS,
-      "xml": XML_NS
-    }
     
     this.contextDocument = contextDocument
     this.contextDocumentName = contextDocumentName
     this.recursionFunction = recursionFunction
   }
 
-  namespaceResolver(ns) {
-    return this.NAMESPACES[ns]
+  /** get an id from an xml node
+   *
+   * @param xml Node the root of the node
+   * @param id the id to find
+   * @return {Node}
+   */
+  static getId(xml, id) {
+    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
+    return docNode.evaluate(`//*[@jf:id='${id}' or @xml:id='${id}']`, docNode,
+      (x) => { return NAMESPACES[x] }, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
   }
 
-  getRange(fragment) {
+  static getRange(xml, fragment) {
+    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
     const [ _1, left, right, _2] = fragment.split(/[(,)]/) // range ( left , right )
-    const leftNode = this.getId(left)
-    const rightNode = this.getId(right)
+    const leftNode = Transformer.getId(xml, left)
+    const rightNode = Transformer.getId(xml, right)
 
     if (leftNode === rightNode) {
       // the whole "range" is actually 1 node
@@ -107,7 +128,7 @@ export default class Transformer {
     else {
       // Ideally, this would be a StaticRange
       // unfortunately, that is supported on fewer browsers
-      const range = this.contextDocument.createRange()
+      const range = docNode.createRange()
       range.setStartBefore(leftNode)
       range.setEndAfter(rightNode)
 
@@ -155,30 +176,18 @@ export default class Transformer {
     }
   }
 
-  getId(id) {
-    return this.contextDocument.evaluate(`//*[@jf:id='${id}' or @xml:id='${id}']`, this.contextDocument,
-      (x) => this.namespaceResolver(x), XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-  }
-
   /** get a fragment
+   * @param xml Node
+   * @param fragment string
    * @return a List[Node] containing the fragment
    */
-  getFragment(fragment) {
+  static getFragment(xml, fragment) {
     return (fragment.startsWith("range")) ?
-      this.getRange(fragment) :
-      [this.getId(fragment)]
+      Transformer.getRange(xml, fragment) :
+      [Transformer.getId(xml, fragment)]
   }
 
-  parsePtr(ptrTarget) {
-    const splitted = ptrTarget.split("#")
-    const documentPart = (splitted.length === 1) ? splitted.pop() : splitted[0]
-    const docSplit = documentPart.split("/")
-    const [documentName, apiName] = [
-      (documentPart === "") ? null : docSplit.pop(),
-      (documentPart === "") ? null : docSplit.pop()]
-    const fragment = (splitted.length === 1) ? null : splitted.pop()
-    return new ParsedPtr(apiName, documentName, fragment)
-  }
+
 
   /** update the "lang" metadata, dependent on the given XML
    * @param newContext We are entering a new context.
@@ -186,7 +195,7 @@ export default class Transformer {
    * */
   updateLanguage(xml, metadata, newContext=false) {
     const oldLang = metadata.get(META_LANG)
-    const newLang = newContext ? Transformer.contextLanguage(xml) :
+    const newLang = newContext ? TransformerMetadata.contextLanguage(xml) :
       (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("xml:lang") && xml.getAttribute("xml:lang"))
     const needsChange = (newLang && (!oldLang || oldLang !== newLang))
 
@@ -196,16 +205,7 @@ export default class Transformer {
     )
   }
 
-  /** @return the context language of the xml node, if available. If not, return null */
-  static contextLanguage(xml) {
-    if (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("xml:lang")) {
-      return xml.getAttribute("xml:lang")
-    }
-    else if (xml.parentElement != null) {
-      return Transformer.contextLanguage(xml.parentElement)
-    }
-    else return null
-  }
+
 
   /** update the licensing metadata. License data can only change when the document has changed
    * @return MetadataUpdate structure indicating new metadata and the update
@@ -221,17 +221,6 @@ export default class Transformer {
     )
   }
 
-  /** Get the license of a particular xml node
-   *
-   * @param xml The node
-   * @return A license URI
-   */
-  contextLicense(xml) {
-    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
-    const licenseNode = docNode.getElementsByTagNameNS(TEI_NS, "licence")[0]
-    const licenseUri = licenseNode.getAttribute("target")
-    return licenseUri
-  }
 
   /** update the contributors metadata, which can only change when the document has changed
    *
@@ -248,63 +237,6 @@ export default class Transformer {
       needsChange ? metadata.set(META_CONTRIBUTORS, newContributors) : metadata)
   }
 
-  /** Pick up contributor data from the context
-   *
-   * @param xml Node in the context document
-   * @return Object A contributor structure consisting of type : [list of contributor URIs]
-   */
-  contextContributors(xml) {
-    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
-    const respStmts = docNode.getElementsByTagNameNS(TEI_NS, "respStmt")
-    const changes = docNode.getElementsByTagNameNS(TEI_NS, "change")
-
-    // iterate through all contributors and add them to the contributors by type
-    // if no type is given, assume their contributor type code is "edt" (editor)
-    const defaultContributorTypeCode = "edt"
-    const contributorsByType = {}
-    for (const contribType of Object.keys(CONTRIBUTOR_TYPES)) {
-      contributorsByType[contribType] = new Set()
-    }
-
-    for (const record of respStmts) {
-      const resp = record.getElementsByTagNameNS(TEI_NS, "resp")
-      const contribType = (resp.length > 0) ? resp[0].getAttribute("key") : defaultContributorTypeCode
-      // in each respStmt, there will be an element *not* called resp (it may be name or orgName) that has a @ref
-      // attribute with the contributor URI
-      const ref = record.querySelectorAll("*[ref]")[0].getAttribute("ref")
-      contributorsByType[contribType].add(ref)
-    }
-    for (const record of changes) {
-      const contribType = defaultContributorTypeCode
-      const who = record.getAttribute("who")
-      contributorsByType[contribType].add(who)
-    }
-    return contributorsByType
-  }
-
-  /** Get a list of source URIs that are applicable to a given document
-   *
-   * @param xml Node A node within the document
-   * @return Array[Object] list of source relative URIs and the relevant scope, or null if no sources found
-   */
-  static contextSources(xml) {
-    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
-    const nsResolver = docNode.createNSResolver( docNode.documentElement)
-    const sourceIterator = docNode.evaluate("//tei:sourceDesc/tei:bibl", docNode,
-      nsResolver, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null)
-    let sources = []
-    for (let i = 0; i < sourceIterator.snapshotLength; i++) {
-      const bibl = sourceIterator.snapshotItem(i)
-      const src = docNode.evaluate("tei:ptr[@type='bibl']/@target", bibl, nsResolver, XPathResult.STRING_TYPE).stringValue.split("/")
-      const source = src[src.length - 1]
-      const biblScope = docNode.evaluate("tei:biblScope", bibl, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE).singleNodeValue
-      const scopeFrom = (biblScope === null) ? null : biblScope.getAttribute("from")
-      const scopeTo = (biblScope === null) ? null : biblScope.getAttribute("to")
-      const scopeUnit = (biblScope === null) ? null : biblScope.getAttribute("unit")
-      sources.push(new ContextSourceInfo(source, scopeUnit, scopeFrom, scopeTo))
-    }
-    return sources.length > 0 ? sources: null
-  }
 
   /** update the sources metadata, which can only change when the document has changed
    *
@@ -314,7 +246,7 @@ export default class Transformer {
    * @return MetadataUpdate structure indicating new metadata and the update
    */
   updateSources(xml, metadata, full=false) {
-    const newSources = full && Transformer.contextSources(xml)
+    const newSources = full && TransformerMetadata.contextSources(xml)
     const needsChange = full && newSources
 
     return new MetadataUpdate(needsChange ? { sources: newSources } : null,
@@ -334,7 +266,7 @@ export default class Transformer {
   /** handle annotations. The API of the annotation (/data/api...) is referenced in the given attribute */
   jfAnnotation(xml, metadata, attribute="jf:annotation") {
     const annotation = xml.getAttribute(attribute)
-    const parsedPtr = this.parsePtr(annotation)
+    const parsedPtr = ParsedPtr.parsePtr(annotation)
     return this.recursionFunction(parsedPtr.documentName, parsedPtr.fragment, metadata, "notes")
   }
 
@@ -351,7 +283,7 @@ export default class Transformer {
       return <a href={target}>{ target }</a>
     }
     else {
-      const parsedPtr = this.parsePtr(target)
+      const parsedPtr = ParsedPtr.parsePtr(target)
       const documentName = parsedPtr.documentName
       let content
       if (documentName === null) {
