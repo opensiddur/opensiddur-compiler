@@ -4,12 +4,25 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
-import TransformerMetadata, {MetadataUpdate, MetadataUpdateList} from "./TransformerMetadata"
-import MetadataBox from "./MetadataBox"
-import {ContextSourceInfo} from "./ContextSourceInfo"
-import ViewTransformer from "./ViewTransformer"
+import UpdateLanguage from "./UpdateLanguage"
+import UpdateLicense from "./UpdateLicense"
+import UpdateContributors from "./UpdateContributors"
+import UpdateSources from "./UpdateSources"
+import DocumentNode from "./DocumentNode"
+import TeiHeader from "./TeiHeader"
+import TeiPtr from "./TeiPtr"
+import TextNode from "./TextNode"
+import DocumentFragment from "./DocumentFragment"
+import GenericElement from "./GenericElement"
+import Annotate from "./Annotate"
+import TransformerMetadata from "./TransformerMetadata"
 
 // TODO:
+// REFACTOR: Transform should become a class with static methods that just switches to which react node to produce
+// REFACTOR: metadata updates should be simplified to LanguageUpdate(), SourcesUpdate(), ContributorsUpdate(),
+//  each of which may return a metadata update box or only its children
+// REFACTOR: use TransformerContextChain instead of contextSwitch()
+
 // test transform()
 // add tracking of text direction on new document?
 // add tracking of text direction on new element?
@@ -65,6 +78,43 @@ export const CONTRIBUTOR_TYPES = {
   "trl" : "Translator"
 }
 
+const DEFAULT_CHAIN={
+  [DOCUMENT_CONTEXT_SWITCH]: [UpdateLicense, UpdateContributors, UpdateSources],
+  [LOCATION_CONTEXT_SWITCH]: [UpdateLanguage, Annotate], // also, UpdateSettings, UpdateConditionals...
+  [ELEMENT_CONTEXT_SWITCH]: []
+}
+
+export class TransformerContextChain {
+  constructor(level, chain_levels=DEFAULT_CHAIN) {
+    this.chain = [
+      ((level >= DOCUMENT_CONTEXT_SWITCH) ? chain_levels[DOCUMENT_CONTEXT_SWITCH] : []),
+      ((level >= LOCATION_CONTEXT_SWITCH) ? chain_levels[LOCATION_CONTEXT_SWITCH] : []),
+      ((level >= ELEMENT_CONTEXT_SWITCH) ? chain_levels[ELEMENT_CONTEXT_SWITCH] : [])
+    ].flat()
+    this.level = level
+  }
+
+  next(props) {
+    if (this.chain.length > 0) {
+      return React.createElement(this.chain.pop(), props)
+    }
+    else {
+      return Transformer.transform(props)
+    }
+  }
+
+  /** Continue the chain with a metadata update
+   *
+   * @param props Props to pass on to the chain
+   * @param metadata New metadata
+   */
+  nextWithMetadataUpdate(props, metadata) {
+    const newProps = Object.assign({}, props) // create a shallow copy
+    newProps.metadata = metadata
+    return this.next(newProps)
+  }
+}
+
 /** Parse a JLPTEI pointer */
 export class ParsedPtr {
   constructor(apiName=null, documentName=null, fragment=null) {
@@ -87,22 +137,14 @@ export class ParsedPtr {
 
 /** Primary transformer class for one JLPTEI original XML to React
  * The Transformer keeps track of its context document
+ * To be used with Transformer, a component must pass the following props:
+ *  xmlDoc - the root document being processed
+ *  nodes - a list of XML nodes to be be processed with the same context
+ *  metadata - a TransformerMetadata structure containing the metadata, as known once the element has been processed
+ *  chain - a TransformerContextChain containing the next functions to call before processing the next node
+ *  transformerRecursionFunction - the function to call when starting processing a new document
  */
 export default class Transformer {
-  /** Initialize a new Transformer
-   *
-   * @param contextDocument The XML document
-   * @param contextDocumentName The name of the document
-   * @param recursionFunction A function to call when recursing to another document.
-   *        Its signature is recursionFunction(documentName, fragment, metadata, apiName='original')
-   */
-  constructor(contextDocument, contextDocumentName, recursionFunction) {
-    
-    this.contextDocument = contextDocument
-    this.contextDocumentName = contextDocumentName
-    this.recursionFunction = recursionFunction
-  }
-
   /** get an id from an xml node
    *
    * @param xml Node the root of the node
@@ -187,274 +229,88 @@ export default class Transformer {
       [Transformer.getId(xml, fragment)]
   }
 
-
-
-  /** update the "lang" metadata, dependent on the given XML
-   * @param newContext We are entering a new context.
-   * @return a structure including the next metadata structure and an update attribute, if necessary
-   * */
-  updateLanguage(xml, metadata, newContext=false) {
-    const oldLang = metadata.get(META_LANG)
-    const newLang = newContext ? TransformerMetadata.contextLanguage(xml) :
-      (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("xml:lang") && xml.getAttribute("xml:lang"))
-    const needsChange = (newLang && (!oldLang || oldLang !== newLang))
-
-    return new MetadataUpdate(
-      needsChange ? { lang: newLang} : null,
-      needsChange ? metadata.set(META_LANG, newLang) : metadata
-    )
-  }
-
-
-
-  /** update the licensing metadata. License data can only change when the document has changed
-   * @return MetadataUpdate structure indicating new metadata and the update
-   */
-  updateLicense(xml, metadata, full=false) {
-    const oldLicense = metadata.get(META_LICENSE)
-    const newLicense = full && this.contextLicense(xml)
-    const needsChange = full && (newLicense && (!oldLicense || oldLicense !== newLicense))
-
-    return new MetadataUpdate(
-      needsChange ? {license: newLicense} : null,
-      needsChange ? metadata.set(META_LICENSE, newLicense) : metadata
-    )
-  }
-
-
-  /** update the contributors metadata, which can only change when the document has changed
-   *
-   * @param xml Node context
-   * @param metadata TransformerMetadata structure
-   * @param full boolean true if the document has been changed
-   * @return MetadataUpdate structure indicating new metadata and the update
-   */
-  updateContributors(xml, metadata, full=false) {
-    const newContributors = full && this.contextContributors(xml)
-    const needsChange = full && newContributors
-
-    return new MetadataUpdate(needsChange ? { contributors: newContributors } : null,
-      needsChange ? metadata.set(META_CONTRIBUTORS, newContributors) : metadata)
-  }
-
-
-  /** update the sources metadata, which can only change when the document has changed
-   *
-   * @param xml Node context
-   * @param metadata TransformerMetadata structure
-   * @param full boolean true if the document has been changed
-   * @return MetadataUpdate structure indicating new metadata and the update
-   */
-  updateSources(xml, metadata, full=false) {
-    const newSources = full && TransformerMetadata.contextSources(xml)
-    const needsChange = full && newSources
-
-    return new MetadataUpdate(needsChange ? { sources: newSources } : null,
-      needsChange ? metadata.set(META_SOURCES, newSources) : metadata)
-  }
-
-  /** handle common attributes that may return elements */
-  commonAttributes(xml, metadata) {
-    let returnValue = []
-    if (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("jf:annotation")) {
-      returnValue.push(this.jfAnnotation(xml, metadata))
-    }
-
-    return returnValue
-  }
-
-  /** handle annotations. The API of the annotation (/data/api...) is referenced in the given attribute */
-  jfAnnotation(xml, metadata, attribute="jf:annotation") {
-    const annotation = xml.getAttribute(attribute)
-    const parsedPtr = ParsedPtr.parsePtr(annotation)
-    return this.recursionFunction(parsedPtr.documentName, parsedPtr.fragment, metadata, "notes")
-  }
-
-  /** handle tei:ptr elements */
-  teiPtr(xml, metadata) {
-    const type = xml.hasAttribute("type") && xml.attributes["type"].value
-    const target = xml.attributes["target"].value
-    const inline = type === "inline"
-    const nextMetadata = metadata.set(META_INLINE_MODE, inline)
-    console.log("ptr", target)
-
-    if (type === "url") {
-      // tei:ptr is an empty element, html:a is not
-      return <a href={target}>{ target }</a>
-    }
-    else {
-      const parsedPtr = ParsedPtr.parsePtr(target)
-      const documentName = parsedPtr.documentName
-      let content
-      if (documentName === null) {
-        // the fragment identifies a part of the same document, there is no need to reload
-        const thisFragment = this.getFragment(parsedPtr.fragment)
-        content = thisFragment.map( (newNode) => {
-          return this.apply(newNode, nextMetadata, LOCATION_CONTEXT_SWITCH)
-        } )
-      }
-      else {
-        content = this.recursionFunction(documentName, parsedPtr.fragment, nextMetadata)
-      }
-      return (
-        <div className={xml.tagName}>{content}</div>
-      )
-    }
-  }
-
-  traverseChildren(xml, metadata) {
-    let attributeChildren = this.commonAttributes(xml, metadata)
-    let parsedChildren = attributeChildren
-
+  static traverseChildren(xml, props) {
     if (xml.hasChildNodes()) {
-      let children = xml.childNodes
-
-      for (let i = 0; i < children.length; i++) {
-        parsedChildren.push(this.transform(children[i], metadata))
-      }
+      return Transformer.applyTo(Array.from(xml.childNodes), props, ELEMENT_CONTEXT_SWITCH)
     }
-    return parsedChildren
+    else return null
   }
 
-  documentNode(xml, metadata) {
-    return this.transform(xml.documentElement, metadata)
-  }
+  // standardProps.nodes[0] is an element
+  static transformElement(standardProps) {
+    const xml = standardProps.nodes[0]
+    const metadata = standardProps.metadata
 
-  documentFragment(xml, metadata) {
-    return this.traverseChildren(xml, metadata)
-  }
-
-  teiHeader(xml, metadata) {
-    console.log("Skipping header")
-    return []
-  }
-
-  genericElement(xml, metadata) {
-    console.log("element node", xml)
-    let parsedChildren = this.traverseChildren(xml, metadata)
-    return (<div className={xml.tagName}>
-      {parsedChildren}
-    </div>)
-  }
-
-  textNode(xml, metadata) {
-    if (metadata.get(META_INLINE_MODE) &&
-      xml.parentNode.nodeType === Node.ELEMENT_NODE && // DocumentFragment does not have a parent element
-      !xml.parentElement.hasAttribute("jf:stream")) {
-      // ignore non-inline data in inline mode
-      return ""
+    if (metadata.get(META_INLINE_MODE) && !xml.hasAttribute("jf:stream")) {
+      // inline mode and the element is not inline... traverse children
+      return Transformer.traverseChildren(xml, standardProps)
     }
     else {
-      return xml.wholeText
-    }
-  }
-
-  /** Perform a context switch (new document, skip to another part of the document)
-   * @param newContext new context node
-   * @param oldMetadata metadata before the context switch
-   * @param contextSwitchLevel One of ELEMENT_CONTEXT_SWITCH, LOCATION_CONTEXT_SWITCH or DOCUMENT_CONTEXT_SWITCH
-   * @param f function of newMetadata to perform on the switched context
-   * @return Nodes as processed by f and wrapped in a context switch, if necessary
-   */
-  contextSwitch(newContext, oldMetadata, contextSwitchLevel, f) {
-    let updates = []
-    updates.unshift(this.updateLanguage(newContext, oldMetadata, contextSwitchLevel >= LOCATION_CONTEXT_SWITCH))
-    updates.unshift(this.updateLicense(newContext, updates[0].nextMetadata, contextSwitchLevel >= DOCUMENT_CONTEXT_SWITCH))
-    updates.unshift(this.updateContributors(newContext, updates[0].nextMetadata, contextSwitchLevel >= DOCUMENT_CONTEXT_SWITCH))
-    updates.unshift(this.updateSources(newContext, updates[0].nextMetadata, contextSwitchLevel >= DOCUMENT_CONTEXT_SWITCH))
-
-    const result = f(updates[0].nextMetadata)
-
-    const contextUpdates = new MetadataUpdateList(updates)
-    const hasContextUpdate = contextUpdates.hasUpdates
-
-    if (hasContextUpdate) {
-      return (<div className="_context" {...contextUpdates.language}>
-        <MetadataBox updates={contextUpdates}/>
-        {result}
-      </div>)
-    }
-    else {
-      return result
-    }
-  }
-
-  elementNode(xml, metadata) {
-    const contextFunction = (nextMetadata) => {
-      let returnValue
-
-      if (metadata.get(META_INLINE_MODE) && !xml.hasAttribute("jf:stream")) {
-        // inline mode and the element is not inline... traverse children
-        returnValue = this.traverseChildren(xml, nextMetadata)
+      switch (xml.tagName) {
+        case "tei:teiHeader":
+          return <TeiHeader {...standardProps}/>
+        case "tei:ptr":
+          return <TeiPtr {...standardProps} />
+        default:
+          return <GenericElement {...standardProps}/>
       }
-      else {
-        switch (xml.tagName) {
-          case "tei:teiHeader":
-            returnValue = this.teiHeader(xml, nextMetadata)
-            break
-          case "tei:ptr":
-            returnValue = this.teiPtr(xml, nextMetadata)
-            break
-          default:
-            returnValue = this.genericElement(xml, nextMetadata)
-            break
-        }
-      }
-      return returnValue
     }
-
-    return this.contextSwitch(xml, metadata, ELEMENT_CONTEXT_SWITCH, contextFunction)
   }
 
   /** transform an XML node from JLPTEI to React/HTML
    *
-   * @param xml {Node} The XML node to start at
-   * @param metadata {TransformerMetadata} Data that should be transferred through recursion
-   *  inline: if true, we are including an inline ptr and all included text from stream-elements should be included,
-   *    but non-stream children should not (no complex structure, just text).
-   *  lang: language code of the context
+   * @param standardProps The standard props for Transformer
    * @returns {string|Array|[]|*|[]|undefined}
    */
-  transform(xml, metadata=new TransformerMetadata()) {
-    switch (xml.nodeType) {
-      case Node.DOCUMENT_NODE:
-        return this.documentNode(xml, metadata)
-      case Node.DOCUMENT_FRAGMENT_NODE:
-        console.log("document fragment node")
-        return this.documentFragment(xml, metadata)
-      case Node.ELEMENT_NODE:
-        return this.elementNode(xml, metadata)
-      case Node.TEXT_NODE:
-        console.log("text node", xml)
-        return this.textNode(xml, metadata)
-      default:
-        console.log("wtf? ", xml)
-        return []
-    }
-  }
+  static transform(standardProps) {
+    console.log("***transform", standardProps)
+    const xmlList = standardProps.nodes
+    return xmlList.map( (xml) => {
+      // set the next context node
+      const nextProps = Object.assign({}, standardProps)
+      nextProps.nodes = [xml]
 
-  /** Apply a transform, including a context switch
-   * @param xml Node The node to begin applying from
-   * @param metadata TransformerMetadata initial metadata
-   * @param contextSwitchLevel int one of the context switch types
-   */
-  apply(xml, metadata=new TransformerMetadata(), contextSwitchLevel=DOCUMENT_CONTEXT_SWITCH) {
-    return this.contextSwitch(xml, metadata, contextSwitchLevel, (newMeta) => { return this.transform(xml, newMeta) })
+      switch (xml.nodeType) {
+        case Node.DOCUMENT_NODE:
+          return <DocumentNode {...nextProps}/>
+        case Node.DOCUMENT_FRAGMENT_NODE:
+          console.log("document fragment node")
+          return <DocumentFragment {...nextProps} />
+        case Node.ELEMENT_NODE:
+          return Transformer.transformElement(nextProps)
+        case Node.TEXT_NODE:
+          console.log("text node", xml)
+          return <TextNode {...nextProps}/>
+        default:
+          console.log("wtf? ", xml)
+          return null
+      }
+    })
   }
-
 
   /** Apply a transform, including a context switch to a list of nodes, treating the first as the major context switch
-   * @param xmlList Array[Node] The node to begin applying from
-   * @param metadata TransformerMetadata initial metadata
+   * @param standardProps props required to call Transformer: the chain and xmlDoc are overridden by apply()
    * @param contextSwitchLevel number one of the context switch types that the list of elements will receive,
    *                           performed on the first element of the list
    */
-  applyList(xmlList, metadata=new TransformerMetadata(), contextSwitchLevel=DOCUMENT_CONTEXT_SWITCH) {
-    return this.contextSwitch(xmlList[0], metadata, contextSwitchLevel, (newMeta) => {
-      return xmlList.map ( (xml) => {
-        return this.transform(xml, newMeta)
-      })
-    })
+  static apply(standardProps,
+        contextSwitchLevel=DOCUMENT_CONTEXT_SWITCH) {
+    const firstXml = standardProps.nodes[0]
+    const contextSwitch = new TransformerContextChain(contextSwitchLevel)
+    console.log("contextSwitch=",contextSwitch)
+    const doc = (firstXml.nodeType === Node.DOCUMENT_NODE) ? firstXml : firstXml.ownerDocument
+    const props = Object.assign({}, standardProps)
+    props.metadata = props.metadata || new TransformerMetadata()
+    props.chain = contextSwitch
+    props.xmlDoc = doc
+    console.log("apply- props",props)
+    return contextSwitch.next(props)
+  }
+
+  static applyTo(xmlList, standardProps, contextSwitchLevel=ELEMENT_CONTEXT_SWITCH) {
+    const props = Object.assign({}, standardProps)
+    props.nodes = xmlList
+    return Transformer.apply(props, contextSwitchLevel)
   }
 
 }

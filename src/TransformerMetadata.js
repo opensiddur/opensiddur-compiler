@@ -114,36 +114,3 @@ export default class TransformerMetadata {
   }
 
 }
-
-/** store an update to document metadata
- *
- */
-export class MetadataUpdate {
-  constructor(update=null, nextMetadata=null) {
-    this.update = update
-    this.nextMetadata = nextMetadata
-  }
-}
-
-/** Given a list of MetadataUpdate, find out what types of updates are present.
- * Assume that updates are given in order of precedence; if no update of that type has already been done, we take the
- * current update
- */
-export class MetadataUpdateList {
-  constructor(updates = []) {
-    this.license = null
-    this.language = null
-    this.contributors = null
-    this.sources = null
-    updates.forEach( (mdUpdate) => {
-      if (mdUpdate.update) {
-        this.license = (!this.license && mdUpdate.update.license) ? mdUpdate.update : this.license
-        this.language = (!this.language && mdUpdate.update.lang) ? mdUpdate.update : this.language
-        this.contributors = (!this.contributors && mdUpdate.update.contributors) ? mdUpdate.update : this.contributors
-        this.sources = (!this.sources && mdUpdate.update.sources) ? mdUpdate.update : this.sources
-      }
-    })
-
-    this.hasUpdates = updates.some( (upd) => { return upd.update })
-  }
-}

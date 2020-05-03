@@ -10,19 +10,6 @@ import '@testing-library/jest-dom/extend-expect'
 import ViewTransformer from "../ViewTransformer"
 import DocumentApi from "../DocumentApi"
 import Transformer from "../Transformer"
-const mockTransformConstructor = jest.fn()
-const mockTransform = jest.fn()
-const mockGetFragment = jest.fn()
-jest.mock("../Transformer", () => {
-  return jest.fn().mockImplementation( () => {
-    return {
-      apply: mockTransform,
-      applyList: mockTransform,
-      transform: mockTransform,
-      getFragment: mockGetFragment
-    }
-  })
-})
 
 const mockDocGet = jest.fn()
 jest.mock("../DocumentApi", () => {
@@ -34,9 +21,25 @@ jest.mock("../DocumentApi", () => {
 })
 
 describe("ViewTransformer component", () => {
+  const mockApply = jest.fn()
+  const mockGetFragment = jest.fn()
+
+  let realApply
+  let realGetFragment
+  beforeAll( () => {
+    realApply = Transformer.apply
+    realGetFragment = Transformer.getFragment
+    Transformer.apply = mockApply
+    Transformer.getFragment = mockGetFragment
+  })
+
+  afterAll( () => {
+    Transformer.apply = realApply
+    Transformer.getFragment = realGetFragment
+  })
+
   afterEach(() => {
-    mockTransform.mockReset()
-    mockTransformConstructor.mockReset()
+    mockApply.mockReset()
     mockGetFragment.mockReset()
     mockDocGet.mockReset()
   })
@@ -55,7 +58,7 @@ describe("ViewTransformer component", () => {
 
   it("renders a requested transformed document", async () => {
     mockDocGet.mockResolvedValue(docContentXml)
-    mockTransform.mockReturnValueOnce(transformedDocument)
+    mockApply.mockReturnValueOnce(transformedDocument)
 
     const { getByText } = render(<ViewTransformer document={docName} />)
     expect(getByText(/Loading/i)).toBeInTheDocument()
@@ -66,7 +69,7 @@ describe("ViewTransformer component", () => {
     expect(mockDocGet.mock.calls[0][2]).toBe("original")
 
     await wait()
-    expect(mockTransform).toHaveBeenCalledTimes(1)
+    expect(mockApply).toHaveBeenCalledTimes(1)
     await wait()
     expect(getByText("Transformed")).toBeInTheDocument()
   })
@@ -74,7 +77,7 @@ describe("ViewTransformer component", () => {
   it("renders a requested transformed fragment", async () => {
     mockDocGet.mockResolvedValue(docContentXml)
     mockGetFragment.mockReturnValueOnce([fragmentXml])
-    mockTransform.mockReturnValueOnce(transformedDocument)
+    mockApply.mockReturnValueOnce(transformedDocument)
 
     const { getByText } = render(<ViewTransformer document={docName} fragment={fragName}/>)
     expect(getByText(/Loading/i)).toBeInTheDocument()
@@ -86,9 +89,9 @@ describe("ViewTransformer component", () => {
 
     await wait()
     expect(mockGetFragment).toHaveBeenCalledTimes(1)
-    expect(mockGetFragment.mock.calls[0][0]).toBe(fragName)
+    expect(mockGetFragment.mock.calls[0][1]).toBe(fragName)
 
-    expect(mockTransform).toHaveBeenCalledTimes(1)
+    expect(mockApply).toHaveBeenCalledTimes(1)
     await wait()
     expect(getByText("Transformed")).toBeInTheDocument()
   })
@@ -98,7 +101,7 @@ describe("ViewTransformer component", () => {
 
     mockDocGet.mockResolvedValue(docContentXml)
     mockGetFragment.mockReturnValueOnce([fragmentXml])
-    mockTransform.mockReturnValueOnce(transformedDocument)
+    mockApply.mockReturnValueOnce(transformedDocument)
 
     const { getByText } = render(<ViewTransformer document={docName} fragment={fragName} api={apiName}/>)
     expect(getByText(/Loading/i)).toBeInTheDocument()
@@ -110,9 +113,9 @@ describe("ViewTransformer component", () => {
 
     await wait()
     expect(mockGetFragment).toHaveBeenCalledTimes(1)
-    expect(mockGetFragment.mock.calls[0][0]).toBe(fragName)
+    expect(mockGetFragment.mock.calls[0][1]).toBe(fragName)
 
-    expect(mockTransform).toHaveBeenCalledTimes(1)
+    expect(mockApply).toHaveBeenCalledTimes(1)
     await wait()
     expect(getByText("Transformed")).toBeInTheDocument()
   })
