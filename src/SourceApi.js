@@ -5,14 +5,15 @@
  */
 
 import BaseApi, {ApiError} from "./BaseApi"
-import Transformer, {TEI_NS} from "./Transformer"
+import {TEI_NS} from "./Transformer"
+import TransformerMetadata from "./TransformerMetadata"
 
 export class SourceReader {
   /** Generate a title structure from title markup */
   static readTitle(title) {
     const type = (title.hasAttribute("type")) ? title.getAttribute("type") : "main"
     const text = title.textContent
-    const lang = Transformer.contextLanguage(title)
+    const lang = TransformerMetadata.contextLanguage(title)
 
     return {
       type: type,

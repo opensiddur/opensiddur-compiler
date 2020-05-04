@@ -30,9 +30,12 @@ export default function ViewTransformer(props) {
     const fetcher = async () => {
       const docContent = await docApi.get(document, "xml", api)
       docContent.normalize()
-      const transformer = new Transformer(docContent, props.document, transformerRecursionFunction)
-      const contentToTransform = fragment ? transformer.getFragment(fragment) : [docContent]
-      const transformed = transformer.applyList(contentToTransform, props.metadata)
+      const contentToTransform = fragment ? Transformer.getFragment(docContent, fragment) : [docContent]
+      const transformed = Transformer.apply({
+        nodes: contentToTransform,
+        transformerRecursionFunction: transformerRecursionFunction,
+        metadata: props.metadata
+      })
 
       setContent(transformed)
     }
