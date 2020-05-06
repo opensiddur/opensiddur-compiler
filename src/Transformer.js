@@ -18,11 +18,6 @@ import Annotate from "./Annotate"
 import TransformerMetadata from "./TransformerMetadata"
 
 // TODO:
-// REFACTOR: Transform should become a class with static methods that just switches to which react node to produce
-// REFACTOR: metadata updates should be simplified to LanguageUpdate(), SourcesUpdate(), ContributorsUpdate(),
-//  each of which may return a metadata update box or only its children
-// REFACTOR: use TransformerContextChain instead of contextSwitch()
-
 // test transform()
 // add tracking of text direction on new document?
 // add tracking of text direction on new element?
@@ -41,6 +36,7 @@ export const META_INLINE_MODE = "inline"
 export const META_LANG = "lang"
 export const META_LICENSE = "license"
 export const META_CONTRIBUTORS = "contributors"
+export const META_SETTINGS = "settings"
 export const META_SOURCES = "sources"
 
 /** indicates a context switch of an element in document order */
