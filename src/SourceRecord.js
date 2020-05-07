@@ -121,7 +121,7 @@ export default function SourceRecord(props) {
 
   useEffect(() => updateSource(), [resource])
 
-  return (<div className="SourceRecord" key={resource}>
+  return (<div className="SourceRecord" key={resource} lang={content.lang}>
     { (content.analytic) && ([<SourceRecordPart part={content.analytic} type="analytic"/>, <i>in</i>])}
     { (content.monogr) && (<SourceRecordPart part={content.monogr} type="monogr"/>) }
     { (content.series) && ([<i>in</i>, <SourceRecordPart part={content.series} type="series"/>]) }

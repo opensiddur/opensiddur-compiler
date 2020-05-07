@@ -234,6 +234,7 @@ describe("Source", () => {
     const data = text2xml(fullSource)
     const result = new Source(data)
     expect(result).toMatchObject({
+      lang: "en",
       analytic: {
         titles: [
           {

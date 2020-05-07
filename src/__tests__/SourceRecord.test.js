@@ -264,6 +264,7 @@ describe("SourceRecord", () => {
     }
 
     mockSourceGet.mockResolvedValue({
+      lang: "en",
       analytic: {
         titles: [{
           type: "main",
@@ -326,13 +327,14 @@ describe("SourceRecord", () => {
       note: "Noted"
     })
 
-    const { queryByText } = render(<SourceRecord source={source} />)
+    const { container, queryByText } = render(<SourceRecord source={source} />)
     // TODO: test what should be displayed while loading
 
     expect(mockSourceGet).toHaveBeenCalledTimes(1)
     expect(mockSourceGet.mock.calls[0][0]).toBe(resourceName)
 
     await wait()
+    expect(container.querySelector("div.SourceRecord[lang=en]")).toBeInTheDocument()
     expect(queryByText("Author One")).toBeInTheDocument()
     expect(queryByText("Author Two")).toBeInTheDocument()
     expect(queryByText("Author Three")).toBeInTheDocument()
