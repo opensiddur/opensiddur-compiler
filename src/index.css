@@ -16,4 +16,52 @@ code {
 :lang(he), :lang(arc) {
   font-family: "David", "Taamey Frank CLM", "Frank Ruehl CLM", "Ezra SIL", serif;
   font-size: 14pt;
+  direction: rtl;
+  text-align: right;
+}
+
+.Content {
+  display: inline-block;
+  width: 50%;
+}
+
+.LeftSidebar {
+  display: inline-block;
+  width: 25%;
+}
+
+.RightSidebar {
+  display: inline-block;
+  width: 25%;
+}
+
+.ExpandableContent {
+  float: left;
+  clear: left;
+  position: relative;
+  margin-left: -45%;
+  width:45%;
+  height:0;
+  z-index:1;
+}
+
+.j\:links, .j\:settings {
+  display: none;
+}
+
+.tei\:head {
+  display: block;
+  font-size: 125%;
+}
+
+.tei\:lg {
+  display: block;
+}
+
+.tei\:l {
+  display:block;
+}
+
+.tei\:p {
+  display: block;
 }

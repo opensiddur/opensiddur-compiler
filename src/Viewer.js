@@ -15,6 +15,10 @@ export default function Viewer() {
   // just a placeholder
   return ( <div className="Viewer">
     <h1>{document}</h1>
-    <ViewTransformer document={document}/>
+    <div className="LeftSidebar" />
+    <div className="Content">
+      <ViewTransformer document={document}/>
+    </div>
+    <div className="RightSidebar" />
   </div>)
 }

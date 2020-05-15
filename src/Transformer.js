@@ -16,6 +16,7 @@ import DocumentFragment from "./DocumentFragment"
 import GenericElement from "./GenericElement"
 import Annotate from "./Annotate"
 import TransformerMetadata from "./TransformerMetadata"
+import TeiAnchor from "./TeiAnchor"
 
 // TODO:
 // REFACTOR: Transform should become a class with static methods that just switches to which react node to produce
@@ -247,6 +248,8 @@ export default class Transformer {
     }
     else {
       switch (xml.tagName) {
+        case "tei:anchor":
+          return <TeiAnchor {...standardProps}/>
         case "tei:teiHeader":
           return <TeiHeader {...standardProps}/>
         case "tei:ptr":

@@ -4,7 +4,7 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
-import { render } from '@testing-library/react'
+import {fireEvent, render} from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 import {DOCUMENT_CONTEXT_SWITCH, META_LICENSE, TransformerContextChain} from "../Transformer"
 import UpdateLicense from "../UpdateLicense"
@@ -99,13 +99,14 @@ describe("UpdateLicense", () => {
 
     const metadata = new TransformerMetadata()
 
-    const { container, queryByText } = render(<UpdateLicense nodes={node} chain={chain} metadata={metadata}/>)
+    const { container, queryByText, getByRole } = render(<UpdateLicense nodes={node} chain={chain} metadata={metadata}/>)
 
     expect(mockNext).toHaveBeenCalledTimes(1)
     expect(mockNext.mock.calls[0][0]).toMatchObject({ chain: chain})
 
     expect(mockContextLicense).toHaveBeenCalledTimes(1)
     // (1) SmallLicenseBox is called
+    fireEvent.click(getByRole("toggle"))
     expect(queryByText(/public domain/i)).toBeInTheDocument()
     // (2) metadata is updated at a lower level
     expect(mockNext.mock.calls[0][0].metadata.get(META_LICENSE)).toBe(newLicenseValue)
@@ -126,13 +127,14 @@ describe("UpdateLicense", () => {
 
     const metadata = new TransformerMetadata().set(META_LICENSE, oldLicenseValue)
 
-    const { container, queryByText } = render(<UpdateLicense nodes={node} chain={chain} metadata={metadata}/>)
+    const { container, queryByText, getByRole } = render(<UpdateLicense nodes={node} chain={chain} metadata={metadata}/>)
 
     expect(mockNext).toHaveBeenCalledTimes(1)
     expect(mockNext.mock.calls[0][0]).toMatchObject({ chain: chain})
 
     expect(mockContextLicense).toHaveBeenCalledTimes(1)
     // (1) SmallLicenseBox is called
+    fireEvent.click(getByRole("toggle"))
     expect(queryByText(/public domain/i)).toBeInTheDocument()
     // (2) metadata is updated at a lower level
     expect(mockNext.mock.calls[0][0].metadata.get(META_LICENSE)).toBe(newLicenseValue)

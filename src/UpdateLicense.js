@@ -7,6 +7,8 @@ import React from "react"
 import {DOCUMENT_CONTEXT_SWITCH, META_LICENSE} from "./Transformer"
 import TransformerMetadata from "./TransformerMetadata"
 import SmallLicenseBox from "./SmallLicenseBox"
+import {faGavel} from "@fortawesome/free-solid-svg-icons"
+import Expandable from "./Expandable"
 
 /** update the licensing metadata. License data can only change when the document has changed
  * @param props Required props are chain, metadata, node
@@ -21,7 +23,9 @@ export default function UpdateLicense(props) {
   if (needsChange) {
     console.log("***UpdateLicense with needsChange:", props)
     return <div className="UpdateLicense">
-      <SmallLicenseBox license={newLicense}/>
+      <Expandable icon={faGavel} title="Copyright license">
+        <SmallLicenseBox license={newLicense}/>
+      </Expandable>
       {
         props.chain.nextWithMetadataUpdate(props, props.metadata.set(META_LICENSE, newLicense))
     }</div>

@@ -7,6 +7,8 @@ import React from "react"
 import {DOCUMENT_CONTEXT_SWITCH, META_SOURCES} from "./Transformer"
 import TransformerMetadata from "./TransformerMetadata"
 import SourceList from "./SourceList"
+import Expandable from "./Expandable"
+import {faBookOpen} from "@fortawesome/free-solid-svg-icons"
 
 export default function UpdateSources(props) {
   const metadata = props.metadata
@@ -17,7 +19,9 @@ export default function UpdateSources(props) {
   if (needsChange) {
     const nextMetadata = metadata.set(META_SOURCES, newSources)
     return <div className="UpdateSources">
-      <SourceList sources={newSources} />
+      <Expandable icon={faBookOpen} title="Source list">
+        <SourceList sources={newSources} />
+      </Expandable>
       { props.chain.nextWithMetadataUpdate(props, nextMetadata) }
     </div>
   }
