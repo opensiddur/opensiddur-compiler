@@ -81,8 +81,8 @@ export const CONTRIBUTOR_TYPES = {
 
 const DEFAULT_CHAIN={
   [DOCUMENT_CONTEXT_SWITCH]: [UpdateLicense, UpdateContributors, UpdateSources],
-  [LOCATION_CONTEXT_SWITCH]: [UpdateLanguage, Annotate], // also, UpdateSettings, UpdateConditionals...
-  [ELEMENT_CONTEXT_SWITCH]: []
+  [LOCATION_CONTEXT_SWITCH]: [], // also, UpdateSettings, UpdateConditionals...
+  [ELEMENT_CONTEXT_SWITCH]: [UpdateLanguage, Annotate]
 }
 
 export class TransformerContextChain {
@@ -140,6 +140,8 @@ export class ParsedPtr {
  * The Transformer keeps track of its context document
  * To be used with Transformer, a component must pass the following props:
  *  xmlDoc - the root document being processed
+ *  documentName - name of the document
+ *  documentApi - API used to retrieve the document
  *  nodes - a list of XML nodes to be be processed with the same context
  *  metadata - a TransformerMetadata structure containing the metadata, as known once the element has been processed
  *  chain - a TransformerContextChain containing the next functions to call before processing the next node
@@ -231,6 +233,7 @@ export default class Transformer {
   }
 
   static traverseChildren(xml, props) {
+    console.log("traverseChildren: ", xml.hasChildNodes(), Array.from(xml.childNodes))
     if (xml.hasChildNodes()) {
       return Transformer.applyTo(Array.from(xml.childNodes), props, ELEMENT_CONTEXT_SWITCH)
     }
@@ -242,9 +245,9 @@ export default class Transformer {
     const xml = standardProps.nodes[0]
     const metadata = standardProps.metadata
 
-    if (metadata.get(META_INLINE_MODE) && !xml.hasAttribute("jf:stream")) {
-      // inline mode and the element is not inline... traverse children
-      return Transformer.traverseChildren(xml, standardProps)
+    if (metadata.get(META_INLINE_MODE) && xml.hasAttribute("jf:layer-id")) {
+      // inline mode and the element is not from the stream - skip it
+      return null
     }
     else {
       switch (xml.tagName) {

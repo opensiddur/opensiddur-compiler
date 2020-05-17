@@ -85,25 +85,18 @@ describe("TeiPtr", () => {
     expect(getByText("Recursed")).toBeInTheDocument()
   })
 
-  it("should pass 'inline' metadata to transform if the pointer is declared to be inline", () => {
-    const mockFragment = text2xml("<fragment>Fragment</fragment>")
-    const mockFragmentData = [mockFragment]
-    mockGetFragment.mockReturnValueOnce(mockFragmentData)
-    mockApplyTo.mockReturnValueOnce(<div>Transformed</div>)
+  it("should pass 'inline' metadata to a ViewTransformer if the pointer is declared to be inline", () => {
+    recursionFunction.mockReturnValueOnce(<div>Recursed</div>)
     const xmlPtr = [text2xml(
       `<tei:ptr xmlns:tei="http://www.tei-c.org/ns/1.0" type="inline" target="#fragmentInCurrentDocument"/>`).documentElement]
-    const { getByText } = render(<TeiPtr nodes={xmlPtr} metadata={metadata} />)
+    const { getByText } = render(<TeiPtr nodes={xmlPtr} metadata={metadata} documentName="document"
+                                         transformerRecursionFunction={recursionFunction} />)
 
-    expect(mockGetFragment).toHaveBeenCalledTimes(1)
-    expect(mockGetFragment.mock.calls[0][1]).toBe("fragmentInCurrentDocument")
-
-    expect(mockApplyTo).toHaveBeenCalledTimes(1)
-    expect(mockApplyTo.mock.calls[0][0]).toBe(mockFragmentData)
-    expect(mockApplyTo.mock.calls[0][1]).toMatchObject({
-      metadata: new TransformerMetadata().set(META_INLINE_MODE, true)
-    })
-    expect(getByText("Transformed")).toBeInTheDocument()
-
+    expect(recursionFunction).toHaveBeenCalledTimes(1)
+    expect(recursionFunction.mock.calls[0][0]).toBe("document")
+    expect(recursionFunction.mock.calls[0][1]).toBe("fragmentInCurrentDocument")
+    expect(recursionFunction.mock.calls[0][2]).toMatchObject(new TransformerMetadata().set("inline", true))
+    expect(getByText("Recursed")).toBeInTheDocument()
   })
 
   it("should pass 'inline' metadata to an external document if the pointer is declared to be inline", () => {

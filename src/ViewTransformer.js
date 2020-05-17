@@ -11,7 +11,7 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React, {useEffect, useState} from "react"
-import Transformer from "./Transformer"
+import Transformer, {META_INLINE_MODE} from "./Transformer"
 import DocumentApi from "./DocumentApi"
 
 export default function ViewTransformer(props) {
@@ -19,6 +19,8 @@ export default function ViewTransformer(props) {
   const api = props.api || "original"
   const fragment = (props.fragment) ? decodeURIComponent(props.fragment) : null
   const docApi = new DocumentApi()
+
+  const originalSuffix = props.metadata.get(META_INLINE_MODE) === true ? "flat" : "combined"
 
   const [content, setContent] = useState(<div>Loading...</div>)
 
@@ -28,10 +30,12 @@ export default function ViewTransformer(props) {
 
   const updateDocument = () => {
     const fetcher = async () => {
-      const docContent = await docApi.get(document, "xml", api)
+      const docContent = await docApi.get(document, "xml", api, originalSuffix)
       docContent.normalize()
       const contentToTransform = fragment ? Transformer.getFragment(docContent, fragment) : [docContent]
       const transformed = Transformer.apply({
+        documentName: document,
+        documentApi: api,
         nodes: contentToTransform,
         transformerRecursionFunction: transformerRecursionFunction,
         metadata: props.metadata
