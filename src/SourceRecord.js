@@ -74,6 +74,7 @@ export class SourceRecordUtil {
     return SourceRecordUtil.joinListOfReactElements([titleMap.get("main"), titleMap.get("sub")].filter( (t) => t), ":", "")
         .concat(SourceRecordUtil.joinListOfReactElements(
           [titleMap.get("alt"), titleMap.get("alt-main"), titleMap.get("alt-sub")].filter( (t) => t),":", ")", "("))
+        .concat(["."])
   }
 }
 
@@ -123,21 +124,21 @@ export default function SourceRecord(props) {
 
   return (<div className="SourceRecord" key={resource} lang={content.lang}>
     { (content.analytic) && ([<SourceRecordPart part={content.analytic} type="analytic"/>, <i>in</i>])}
-    { (content.monogr) && (<SourceRecordPart part={content.monogr} type="monogr"/>) }
-    { (content.series) && ([<i>in</i>, <SourceRecordPart part={content.series} type="series"/>]) }
-    { (content.edition) && (<span className="edition">{content.edition}.</span>)}
-    { (content.publisher) && (<span className="publisher">{content.publisher}:</span>)}
-    { (content.publicationPlace) && (<span className="publicationPlace">{content.publicationPlace},</span>)}
-    { (content.publicationDate) && (<span className="publicationDate">{content.publicationDate}.</span>)}
+    { (content.monogr) && ([<SourceRecordPart part={content.monogr} type="monogr"/>, " " ]) }
+    { (content.series) && ([<i>in</i>, <SourceRecordPart part={content.series} type="series"/>, " "]) }
+    { (content.edition) && ([<span className="edition">{content.edition}</span>, ". "])}
+    { (content.publisher) && (<span className="publisher">{content.publisher}: </span>)}
+    { (content.publicationPlace) && ([<span className="publicationPlace">{content.publicationPlace}</span>, ", "])}
+    { (content.publicationDate) && ([<span className="publicationDate">{content.publicationDate}</span>, ". "])}
     { (content.distributor || content.distributorWeb) && (
       <span className="distributor">
-        { (content.distributorWeb) && (<a className="distributorWeb" href={content.distributorWeb}>{content.distributor}</a>) }
-        { (!content.distributorWeb) && content.distributor}
+        { (content.distributorWeb) && ([<a className="distributorWeb" href={content.distributorWeb}>{content.distributor}</a>, " "]) }
+        { (!content.distributorWeb) && content.distributor + " "}
         { (content.distributorAccessDate) &&
         SourceRecordUtil.joinListOfReactElements([<span className="distributorAccessDate">{content.distributorAccessDate}</span>], "", ".", ". Accessed ")}
       </span>
     )}
-    { (content.copyright) && (<span className="copyrightNote">{content.copyright}</span>) }
+    { (content.copyright) && ([<span className="copyrightNote">{content.copyright}</span>, " " ])}
     { (content.note) && (<span className="biblioNote">{content.note}</span>) }
   </div> )
 

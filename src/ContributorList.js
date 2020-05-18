@@ -48,7 +48,7 @@ export default function ContributorList(props) {
     ]
   })
 
-  return (<div className="ContributorList">
+  return (<div className="ContributorList" lang="en">
     { (records.length > 0) && <h2>Contributors</h2> }
     {records}
   </div> )
