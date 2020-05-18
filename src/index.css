@@ -74,12 +74,17 @@ code {
 
 .tei\:lg {
   display: block;
+  margin-top: 1ex;
 }
 
 .tei\:l {
   display:block;
+  margin-top: 0.5ex;
+  margin-bottom: 0.5ex;
 }
 
 .tei\:p {
   display: block;
+  margin-top: 1ex;
+  margin-bottom: 1ex;
 }
