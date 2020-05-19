@@ -62,7 +62,7 @@ describe("UpdateSources", () => {
     })
   })
 
-  ignore("lists new sources when there are new context sources", () => {
+  test.skip("lists new sources when there are new context sources", () => {
     // TODO: figure out how to write this test
   })
 

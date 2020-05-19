@@ -39,9 +39,10 @@ describe("License class", () => {
 })
 
 describe("SmallLicenseBox", () => {
-  it("renders the name of the license given by the URL", () => {
+  it("expands and renders the name of the license given by the URL", () => {
     const testLicense = "http://www.creativecommons.org/licenses/by/4.0"
-    const { getByText } = render(<SmallLicenseBox license={testLicense}/>)
+    const { getByText, getByRole } = render(<SmallLicenseBox license={testLicense}/>)
+
     const licenseText = getByText(/Creative Commons/)
     expect(licenseText.textContent).toMatch(/Attribution/)
     expect(licenseText.textContent).toMatch(/4\.0/)

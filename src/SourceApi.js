@@ -97,6 +97,8 @@ export class Source {
     const docElement = markup.ownerDocument == null ? markup.documentElement : markup.ownerDocument.documentElement
     const nsResolver = markup.createNSResolver(docElement)
 
+    const defaultLang = docElement.getAttribute("xml:lang")
+
     const analytic = markup.getElementsByTagNameNS(TEI_NS, "analytic").item(0)
     const monogr = markup.getElementsByTagNameNS(TEI_NS, "monogr").item(0)
     const series = markup.getElementsByTagNameNS(TEI_NS, "series").item(0)
@@ -118,7 +120,9 @@ export class Source {
     const copyright = markup.evaluate("//tei:note[@type='copyright']", markup, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
     const source = markup.getElementsByTagNameNS(TEI_NS, "idno").item(0)
 
+    // TODO: run Transformer.transform() on everything that has textContent here
     return {
+      lang: defaultLang,
       analytic: (analytic === null) ? null : new SourceLevel(analytic),
       monogr: (monogr === null) ? null : new SourceLevel(monogr),
       series: (series === null) ? null : new SourceLevel(series),

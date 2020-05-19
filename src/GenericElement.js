@@ -5,6 +5,7 @@
  */
 import React from "react"
 import Transformer from "./Transformer"
+import "./GenericElement.css"
 
 export default function GenericElement(props) {
   const xml = props.nodes[0]

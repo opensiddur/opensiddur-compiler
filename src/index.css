@@ -3,6 +3,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
+  font-size: 12pt;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -10,4 +11,80 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
+}
+
+:lang(he), :lang(arc) {
+  font-family: "David", "Taamey Frank CLM", "Frank Ruehl CLM", "Ezra SIL", serif;
+  font-size: 14pt;
+  direction: rtl;
+  text-align: right;
+}
+
+:lang(en) {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+  "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+  sans-serif;font-size: 14pt;
+  direction: ltr;
+  text-align: left;
+}
+
+
+.Content {
+  display: inline-block;
+  width: 50%;
+}
+
+.LeftSidebar {
+  display: inline-block;
+  width: 25%;
+}
+
+.RightSidebar {
+  display: inline-block;
+  width: 25%;
+}
+
+.Expandable {
+  text-align: left;
+  float:left;
+  clear:both;
+  position: relative;
+  margin-left: -45%;
+  width:45%;
+}
+
+.ExpandableContent {
+  width:30%;
+  z-index:1;
+}
+
+.j\:links, .j\:settings {
+  display: none;
+}
+
+.tei\:head {
+  display: block;
+  font-size: 125%;
+}
+
+/* turn off verse numbers... not sure we always want it */
+.tei\:label {
+  display: none;
+}
+
+.tei\:lg {
+  display: block;
+  margin-top: 1ex;
+}
+
+.tei\:l {
+  display:block;
+  margin-top: 0.5ex;
+  margin-bottom: 0.5ex;
+}
+
+.tei\:p {
+  display: block;
+  margin-top: 1ex;
+  margin-bottom: 1ex;
 }
