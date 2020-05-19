@@ -71,10 +71,11 @@ export class SourceRecordUtil {
       const thisTitle = <span lang={title.lang} className={titleClass}>{title.text}</span>
       titleMap.set(titleType, thisTitle)
     })
-    return SourceRecordUtil.joinListOfReactElements([titleMap.get("main"), titleMap.get("sub")].filter( (t) => t), ":", "")
+    const records = SourceRecordUtil.joinListOfReactElements([titleMap.get("main"), titleMap.get("sub")].filter( (t) => t), ":", "")
         .concat(SourceRecordUtil.joinListOfReactElements(
           [titleMap.get("alt"), titleMap.get("alt-main"), titleMap.get("alt-sub")].filter( (t) => t),":", ")", "("))
-        .concat(["."])
+    
+    return records.length > 0 ? records.concat(["."]) : records
   }
 }
 
