@@ -5,6 +5,7 @@
  */
 import TransformerMetadata from "../TransformerMetadata"
 import {text2xml} from "../TestUtils"
+import DocumentApi from "../DocumentApi"
 import Transformer, {LOCATION_CONTEXT_SWITCH, META_INLINE_MODE} from "../Transformer"
 import {render} from "@testing-library/react"
 import '@testing-library/jest-dom/extend-expect'
@@ -22,15 +23,15 @@ describe("TeiPtr", () => {
 
   beforeAll( () => {
     realApplyTo = Transformer.applyTo
-    realGetFragment = Transformer.getFragment
+    realGetFragment = DocumentApi.getFragment
 
     Transformer.applyTo = mockApplyTo
-    Transformer.getFragment = mockGetFragment
+    DocumentApi.getFragment = mockGetFragment
   })
 
   afterAll( () => {
     Transformer.applyTo = realApplyTo
-    Transformer.getFragment = realGetFragment
+    DocumentApi.getFragment = realGetFragment
   })
 
   afterEach( () => {

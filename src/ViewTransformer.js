@@ -32,7 +32,7 @@ export default function ViewTransformer(props) {
     const fetcher = async () => {
       const docContent = await docApi.get(document, "xml", api, originalSuffix)
       docContent.normalize()
-      const contentToTransform = fragment ? Transformer.getFragment(docContent, fragment) : [docContent]
+      const contentToTransform = fragment ? DocumentApi.getFragment(docContent, fragment) : [docContent]
       const transformed = Transformer.apply({
         documentName: document,
         documentApi: api,

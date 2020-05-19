@@ -5,6 +5,7 @@
  */
 import React from "react"
 import Transformer, {LOCATION_CONTEXT_SWITCH, META_INLINE_MODE, ParsedPtr} from "./Transformer"
+import DocumentApi from "./DocumentApi"
 
 export default function TeiPtr(props) {
   const xml = props.nodes[0]
@@ -27,7 +28,7 @@ export default function TeiPtr(props) {
     let content
     if (documentName === null && !inline) {
       // the fragment identifies a part of the same document, there is no need to reload
-      const thisFragment = Transformer.getFragment(xml.ownerDocument, parsedPtr.fragment)
+      const thisFragment = DocumentApi.getFragment(xml.ownerDocument, parsedPtr.fragment)
 
       content = Transformer.applyTo(thisFragment, nextProps, LOCATION_CONTEXT_SWITCH)
     }

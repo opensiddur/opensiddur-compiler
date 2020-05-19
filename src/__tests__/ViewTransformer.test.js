@@ -29,14 +29,14 @@ describe("ViewTransformer component", () => {
   let realGetFragment
   beforeAll( () => {
     realApply = Transformer.apply
-    realGetFragment = Transformer.getFragment
+    realGetFragment = DocumentApi.getFragment
     Transformer.apply = mockApply
-    Transformer.getFragment = mockGetFragment
+    DocumentApi.getFragment = mockGetFragment
   })
 
   afterAll( () => {
     Transformer.apply = realApply
-    Transformer.getFragment = realGetFragment
+    DocumentApi.getFragment = realGetFragment
   })
 
   afterEach(() => {
