@@ -25,14 +25,14 @@ export default function TeiPtr(props) {
     const parsedPtr = ParsedPtr.parsePtr(target)
     const documentName = parsedPtr.documentName
     let content
-    if (documentName === null) {
+    if (documentName === null && !inline) {
       // the fragment identifies a part of the same document, there is no need to reload
       const thisFragment = Transformer.getFragment(xml.ownerDocument, parsedPtr.fragment)
 
       content = Transformer.applyTo(thisFragment, nextProps, LOCATION_CONTEXT_SWITCH)
     }
     else {
-      content = props.transformerRecursionFunction(documentName, parsedPtr.fragment, nextMetadata)
+      content = props.transformerRecursionFunction(documentName || props.documentName, parsedPtr.fragment, nextMetadata)
     }
     return (
       <div className={xml.tagName}>{content}</div>

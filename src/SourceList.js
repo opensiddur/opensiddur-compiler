@@ -17,7 +17,7 @@ import SourceRecord from "./SourceRecord"
 export default function SourceList(props) {
   const sources = props.sources
 
-  return (<div className="SourceList">
+  return (<div className="SourceList" lang="en">
     { (sources.length > 0) && <h2>Sources</h2> }
     {
       sources.map( (source) => {
