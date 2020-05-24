@@ -7,6 +7,7 @@ import React from "react"
 import UpdateLanguage from "./UpdateLanguage"
 import UpdateLicense from "./UpdateLicense"
 import UpdateContributors from "./UpdateContributors"
+import UpdateSettings from "./UpdateSettings"
 import UpdateSources from "./UpdateSources"
 import DocumentNode from "./DocumentNode"
 import TeiHeader from "./TeiHeader"
@@ -78,7 +79,7 @@ export const CONTRIBUTOR_TYPES = {
 const DEFAULT_CHAIN={
   [DOCUMENT_CONTEXT_SWITCH]: [UpdateLicense, UpdateContributors, UpdateSources],
   [LOCATION_CONTEXT_SWITCH]: [], // also, UpdateSettings, UpdateConditionals...
-  [ELEMENT_CONTEXT_SWITCH]: [UpdateLanguage, Annotate]
+  [ELEMENT_CONTEXT_SWITCH]: [UpdateLanguage, UpdateSettings, Annotate]
 }
 
 export class TransformerContextChain {
@@ -222,7 +223,7 @@ export default class Transformer {
     props.chain = contextSwitch
     props.xmlDoc = doc
     console.log("apply- props",props)
-    return contextSwitch.next(props)
+    return props.nodes.map(node => contextSwitch.next(Object.assign(props, {nodes: [node]})))
   }
 
   static applyTo(xmlList, standardProps, contextSwitchLevel=ELEMENT_CONTEXT_SWITCH) {
