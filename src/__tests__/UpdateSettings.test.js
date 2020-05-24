@@ -7,7 +7,7 @@ import React from "react"
 import {text2xml} from "../TestUtils"
 import UpdateSettings, {mergeSettings, parseSettings} from "../UpdateSettings"
 import TransformerMetadata from "../TransformerMetadata"
-import {render} from "@testing-library/react"
+import {cleanup, render} from "@testing-library/react"
 import '@testing-library/jest-dom/extend-expect'
 import DocumentApi from "../DocumentApi"
 import {META_SETTINGS} from "../Transformer"
@@ -177,6 +177,7 @@ describe("UpdateSettings", () => {
     mockNextWithMetadataUpdate.mockReset()
     mockDocGet.mockReset()
     mockGetFragment.mockReset()
+    cleanup()
   } )
 
   afterAll(() => {
@@ -222,6 +223,7 @@ describe("UpdateSettings", () => {
         <tei:f name="f2"><j:yes/></tei:f>
       </tei:fs>
     </tei:x>`)
+    console.log(mockSettings)
     mockDocGet.mockResolvedValue(mockSettings)
     mockGetFragment.mockReturnValue(mockSettings.documentElement.firstChild)
 
