@@ -12,15 +12,20 @@ import SourceList from "../SourceList"
 import SourceApi from "../SourceApi"
 // this is kind of ugly, since we're mocking something called downstream...
 const mockSourceGet = jest.fn()
-jest.mock("../SourceApi", () => {
-  return jest.fn().mockImplementation( () => ({
-    get: mockSourceGet
-  }))
-})
 
 describe("SourceList", () => {
+  let realSourceGet
+  beforeAll(() => {
+    realSourceGet = SourceApi.get
+    SourceApi.get = mockSourceGet
+  })
+
   afterEach( () => {
     mockSourceGet.mockReset()
+  })
+
+  afterAll(() => {
+    SourceApi.get = realSourceGet
   })
 
   it("lists no sources if none are returned", () => {

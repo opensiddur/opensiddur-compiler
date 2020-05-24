@@ -141,15 +141,15 @@ export class Source {
   }
 }
 
-export default class SourceApi extends BaseApi {
+export default class SourceApi {
   /** Retrieve a source
    * @param source string The source name, URL encoded
    * @return A promise to a Source containing the source information
    */
-  async get(source) {
+  static async get(source) {
     const url = new URL(`/api/data/sources/${source}`, window.location.origin)
 
-    const textDoc = await this.fetchText(url, "xml")
+    const textDoc = await BaseApi.fetchText(url, "xml")
 
     const markup = new DOMParser().parseFromString(textDoc, "application/xml")
     const error = markup.querySelector("parsererror")

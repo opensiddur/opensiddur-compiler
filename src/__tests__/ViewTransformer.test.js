@@ -13,30 +13,27 @@ import Transformer, {META_INLINE_MODE} from "../Transformer"
 import TransformerMetadata from "../TransformerMetadata"
 
 const mockDocGet = jest.fn()
-jest.mock("../DocumentApi", () => {
-  return jest.fn().mockImplementation( () => {
-    return {
-      get: mockDocGet
-    }
-  })
-})
 
 describe("ViewTransformer component", () => {
   const mockApply = jest.fn()
   const mockGetFragment = jest.fn()
 
+  let realDocGet
   let realApply
   let realGetFragment
   beforeAll( () => {
     realApply = Transformer.apply
     realGetFragment = DocumentApi.getFragment
+    realDocGet = DocumentApi.get
     Transformer.apply = mockApply
     DocumentApi.getFragment = mockGetFragment
+    DocumentApi.get = mockDocGet
   })
 
   afterAll( () => {
     Transformer.apply = realApply
     DocumentApi.getFragment = realGetFragment
+    DocumentApi.get = realDocGet
   })
 
   afterEach(() => {

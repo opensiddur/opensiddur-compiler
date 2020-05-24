@@ -5,11 +5,9 @@
  */
 import UserApi from "../UserApi"
 import UserInfo from "../UserInfo"
-import {ApiError} from "../BaseApi"
+import BaseApi, {ApiError} from "../BaseApi"
 
 describe("user API", () => {
-  const userApi = new UserApi()
-
   const mockUserName = "mockuser"
   const parsableUserXml = `<tei:contributor xmlns:tei="http://www.tei-c.org/ns/1.0">
     <tei:idno>identifier</tei:idno>
@@ -21,7 +19,15 @@ describe("user API", () => {
   </tei:contributor>`
   const unparsableXml = "<testXml></closeADifferentTag>"
 
+  const mockFetchText = jest.fn()
+
   let windowSpy
+  let realFetchText
+
+  beforeAll(() => {
+    realFetchText = BaseApi.fetchText
+    BaseApi.fetchText = mockFetchText
+  })
 
   beforeEach(() => {
     windowSpy = jest.spyOn(global, 'window', 'get')
@@ -37,11 +43,14 @@ describe("user API", () => {
     windowSpy.mockRestore()
   })
 
+  afterAll(() => {
+    BaseApi.fetchText = mockFetchText
+  })
 
   it("should fetch and parse a contributor record", async () => {
-    const spy = jest.spyOn(userApi, 'fetchText').mockResolvedValue(parsableUserXml)
+    const spy = mockFetchText.mockResolvedValue(parsableUserXml)
 
-    const result = await userApi.get(mockUserName)
+    const result = await UserApi.get(mockUserName)
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy.mock.calls[0][0]).toMatchObject(
       new URL(`https://test.example.com/user/${mockUserName}`))
@@ -51,9 +60,9 @@ describe("user API", () => {
   })
 
   it("should fetch and parse a organization record", async () => {
-    const spy = jest.spyOn(userApi, 'fetchText').mockResolvedValue(parsableOrgXml)
+    const spy = mockFetchText.mockResolvedValue(parsableOrgXml)
 
-    const result = await userApi.get(mockUserName)
+    const result = await UserApi.get(mockUserName)
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy.mock.calls[0][0]).toMatchObject(
       new URL(`https://test.example.com/user/${mockUserName}`))
@@ -63,9 +72,9 @@ describe("user API", () => {
   })
 
   it("should fail on unparsable XML", async () => {
-    const spy = jest.spyOn(userApi, 'fetchText').mockResolvedValue(unparsableXml)
+    const spy = mockFetchText.mockResolvedValue(unparsableXml)
 
-    await expect(userApi.get(mockUserName)).
+    await expect(UserApi.get(mockUserName)).
     rejects.toMatchObject(new ApiError(false, "parse failed", expect.any(String)))
 
     spy.mockRestore()

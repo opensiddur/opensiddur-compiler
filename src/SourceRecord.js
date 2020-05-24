@@ -107,14 +107,13 @@ export function SourceRecordPart(props) {
  * @constructor
  */
 export default function SourceRecord(props) {
-  const sourceApi = new SourceApi()
   const resource = props.source.resource
   const [content, setContent] = useState("Loading " + resource + "...")
 
   const updateSource = () => {
     const fetcher = async () => {
       console.log("*** get resource", resource)
-      const sourceData = await sourceApi.get(resource)
+      const sourceData = await SourceApi.get(resource)
       console.log("***", resource, "returns", sourceData)
       setContent(sourceData)
     }

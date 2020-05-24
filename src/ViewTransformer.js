@@ -18,7 +18,6 @@ export default function ViewTransformer(props) {
   const document = props.document
   const api = props.api || "original"
   const fragment = (props.fragment) ? decodeURIComponent(props.fragment) : null
-  const docApi = new DocumentApi()
 
   const originalSuffix = props.metadata.get(META_INLINE_MODE) === true ? "flat" : "combined"
 
@@ -30,7 +29,7 @@ export default function ViewTransformer(props) {
 
   const updateDocument = () => {
     const fetcher = async () => {
-      const docContent = await docApi.get(document, "xml", api, originalSuffix)
+      const docContent = await DocumentApi.get(document, "xml", api, originalSuffix)
       docContent.normalize()
       const contentToTransform = fragment ? DocumentApi.getFragment(docContent, fragment) : [docContent]
       const transformed = Transformer.apply({

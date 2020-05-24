@@ -115,7 +115,6 @@ export default function UpdateSettings(props) {
 
   const fetchAll = () => {
     if (hasUpdates) {
-      const docApi = new DocumentApi()
       const currentSettings = props.metadata.get(META_SETTINGS) || {}
 
       const getSettingsFrom = async (uri) => {
@@ -123,7 +122,7 @@ export default function UpdateSettings(props) {
         console.log("$$$ get settings", uri, parsedSettingUri)
         const documentName = parsedSettingUri.documentName || props.documentName
         const documentApi = parsedSettingUri.apiName || props.documentApi
-        const settingsResource = await docApi.get(documentName, "xml", documentApi)
+        const settingsResource = await DocumentApi.get(documentName, "xml", documentApi)
         const settingsXml = parsedSettingUri.fragment ?
           DocumentApi.getFragment(settingsResource, parsedSettingUri.fragment) : settingsResource.documentElement
         console.log(settingsXml)

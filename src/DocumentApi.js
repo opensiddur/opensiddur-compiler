@@ -7,7 +7,7 @@
 import BaseApi, {ApiError} from "./BaseApi"
 import {NAMESPACES} from "./Transformer"
 
-export default class DocumentApi extends BaseApi {
+export default class DocumentApi {
   /** get an id from an xml node
    *
    * @param xml Node the root of the node
@@ -99,12 +99,12 @@ export default class DocumentApi extends BaseApi {
    * @param originalSuffix suffix to apply when api="original"; ignored in all other cases
    * @return A promise to the document
    */
-  async get(documentName, format="xml", api="original", originalSuffix="combined") {
+  static async get(documentName, format="xml", api="original", originalSuffix="combined") {
     const apiSuffix = (api === "original") ? ("/" + originalSuffix) : ""
     const url = new URL(`/api/data/${api}/${documentName}${apiSuffix}`, window.location.origin)
     const parseFormat = (format === "xml") ? "application/xml" : "text/html"
 
-    const textDoc = await this.fetchText(url, format)
+    const textDoc = await BaseApi.fetchText(url, format)
 
     const markup = new DOMParser().parseFromString(textDoc, parseFormat)
     const error = markup.querySelector("parsererror")

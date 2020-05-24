@@ -9,12 +9,12 @@ import UserInfo from "./UserInfo"
 import {TEI_NS} from "./Transformer"
 
 
-export default class UserApi extends BaseApi {
+export default class UserApi {
   /** Return a JSON structure with the user information
    * @param markup DocumentNode document containing the user info
    * @return UserInfo from the markup
    */
-  parseUserData(markup) {
+  static parseUserData(markup) {
     const textIfPresent = (elementName) => {
       const tag = markup.getElementsByTagNameNS(TEI_NS, elementName)
       return (tag.length > 0) ? tag[0].textContent : null
@@ -31,16 +31,16 @@ export default class UserApi extends BaseApi {
    * @param userName string The user name, URL encoded
    * @return A promise to the parsed UserInfo structure
    */
-  async get(userName) {
+  static async get(userName) {
     const url = new URL(`/api/user/${userName}`, window.location.origin)
 
-    const textDoc = await this.fetchText(url, "xml")
+    const textDoc = await BaseApi.fetchText(url, "xml")
 
     const markup = new DOMParser().parseFromString(textDoc, "application/xml")
     const error = markup.querySelector("parsererror")
 
     if (error === null) {
-      return this.parseUserData(markup)
+      return UserApi.parseUserData(markup)
     }
     else {
       throw new ApiError(false, "parse failed", error.textContent)

@@ -14,13 +14,6 @@ import DiscoveryApi from "../DiscoveryApi"
 import {waitForElement} from "@testing-library/dom"
 
 const mockDiscoveryList = jest.fn()
-jest.mock("../DiscoveryApi", () => {
-  return jest.fn().mockImplementation( () => {
-    return {
-      list: mockDiscoveryList
-    }
-  })
-})
 
 
 describe("Chooser", () => {
@@ -33,7 +26,12 @@ describe("Chooser", () => {
     }
   })
 
+  let realDiscoveryList
+
   beforeAll( () => {
+    realDiscoveryList = DiscoveryApi.list
+    DiscoveryApi.list = mockDiscoveryList
+
     mockDiscoveryList.mockImplementation(
       (apiName, queryString = "", start = 1, itemsPerPage = 5) => {
         return Promise.resolve({
@@ -45,6 +43,9 @@ describe("Chooser", () => {
       })
   })
 
+  afterAll( () => {
+    DiscoveryApi.list = realDiscoveryList
+  })
 
   it("should not display a selection when first rendered, " +
     "then should display the selection once selected, " +

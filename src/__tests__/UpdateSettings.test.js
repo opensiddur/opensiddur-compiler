@@ -12,17 +12,6 @@ import '@testing-library/jest-dom/extend-expect'
 import DocumentApi from "../DocumentApi"
 import {META_SETTINGS} from "../Transformer"
 
-const mockDocGet = jest.fn()
-const mockGetFragment = jest.fn()
-jest.mock("../DocumentApi", () => {
-  return jest.fn().mockImplementation( () => {
-    return {
-      get: mockDocGet
-    }
-  })
-})
-
-
 describe("parseSettings", () => {
   it("parses all types of settings structures", () => {
     const settingsXml = text2xml(`
@@ -165,16 +154,22 @@ describe("mergeSettings", () => {
 describe("UpdateSettings", () => {
   const mockNext = jest.fn()
   const mockNextWithMetadataUpdate = jest.fn()
+  const mockDocGet = jest.fn()
+  const mockGetFragment = jest.fn()
+
   const mockChain = {
     next: mockNext,
     nextWithMetadataUpdate: mockNextWithMetadataUpdate
   }
 
   let realGetFragment
+  let realDocGet
 
   beforeAll(() => {
     realGetFragment = DocumentApi.getFragment
+    realDocGet = DocumentApi.get
     DocumentApi.getFragment = mockGetFragment
+    DocumentApi.get = mockDocGet
     })
 
   afterEach( () => {
@@ -186,6 +181,7 @@ describe("UpdateSettings", () => {
 
   afterAll(() => {
     DocumentApi.getFragment = realGetFragment
+    DocumentApi.get = realDocGet
   })
 
   it("updates the metadata when new settings are available", () => {

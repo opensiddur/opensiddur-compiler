@@ -11,11 +11,6 @@ import SourceRecord, {SourceRecordPart, SourceRecordUtil} from "../SourceRecord"
 import ContributorRecord from "../ContributorRecord"
 
 const mockSourceGet = jest.fn()
-jest.mock("../SourceApi", () => {
-  return jest.fn().mockImplementation( () => ({
-    get: mockSourceGet
-  }))
-})
 
 describe("SourceRecordUtil.joinListOfReactElements", () => {
   it("should return an empty list when an empty list is input", () => {
@@ -253,8 +248,19 @@ describe("SourceRecordPart", () => {
 })
 
 describe("SourceRecord", () => {
+  let realSourceGet
+
+  beforeAll( () => {
+    realSourceGet = SourceApi.get
+    SourceApi.get = mockSourceGet
+  })
+
   afterEach(() => {
     mockSourceGet.mockReset()
+  })
+
+  afterAll(() => {
+    SourceApi.get = realSourceGet
   })
 
   it("renders when given full data", async () => {

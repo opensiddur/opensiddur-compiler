@@ -4,19 +4,25 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import DocumentApi from "../DocumentApi"
-import {ApiError} from "../BaseApi"
+import BaseApi, {ApiError} from "../BaseApi"
 import {text2xml} from "../TestUtils"
 import Transformer from "../Transformer"
 
 describe("document API", () => {
-  const documentApi = new DocumentApi()
-
   const mockDocumentName = "mockument"
   const parsableXml = "<testXml>Test XML!</testXml>"
   const parsableHtml = "<html><head><title>Title</title></head><body>body</body></html>"
   const unparsableXml = "<testXml></closeADifferentTag>"
 
+  const mockFetchText = jest.fn()
+
+  let realFetchText
   let windowSpy
+
+  beforeAll(() => {
+    realFetchText = BaseApi.fetchText
+    BaseApi.fetchText = mockFetchText
+  })
 
   beforeEach(() => {
     windowSpy = jest.spyOn(global, 'window', 'get')
@@ -26,17 +32,23 @@ describe("document API", () => {
         origin: 'https://test.example.com'
       }
     }))
+
+    mockFetchText.mockReset()
   })
 
   afterEach(() => {
     windowSpy.mockRestore()
   })
 
+  afterAll( () => {
+    BaseApi.fetchText = realFetchText
+  })
+
 
   it("should fetch and parse an original document from .../combined", async () => {
-    const spy = jest.spyOn(documentApi, 'fetchText').mockResolvedValue(parsableXml)
+    const spy = mockFetchText.mockResolvedValue(parsableXml)
 
-    const result = await documentApi.get(mockDocumentName, "xml", "original")
+    const result = await DocumentApi.get(mockDocumentName, "xml", "original")
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy.mock.calls[0][0]).toMatchObject(
       new URL(`https://test.example.com/api/data/original/${mockDocumentName}/combined`))
@@ -46,9 +58,9 @@ describe("document API", () => {
   })
 
   it("should fetch and parse an original document from a custom suffix", async () => {
-    const spy = jest.spyOn(documentApi, 'fetchText').mockResolvedValue(parsableXml)
+    const spy = mockFetchText.mockResolvedValue(parsableXml)
 
-    const result = await documentApi.get(mockDocumentName, "xml", "original", "suffix")
+    const result = await DocumentApi.get(mockDocumentName, "xml", "original", "suffix")
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy.mock.calls[0][0]).toMatchObject(
       new URL(`https://test.example.com/api/data/original/${mockDocumentName}/suffix`))
@@ -58,9 +70,9 @@ describe("document API", () => {
   })
 
   it("should fetch and parse a document from any other API (say, html)", async () => {
-    const spy = jest.spyOn(documentApi, 'fetchText').mockResolvedValue(parsableHtml)
+    const spy = mockFetchText.mockResolvedValue(parsableHtml)
 
-    const result = await documentApi.get(mockDocumentName, "xml", "htmlwazoo")
+    const result = await DocumentApi.get(mockDocumentName, "xml", "htmlwazoo")
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy.mock.calls[0][0]).toMatchObject(
       new URL(`https://test.example.com/api/data/htmlwazoo/${mockDocumentName}`))
@@ -70,9 +82,9 @@ describe("document API", () => {
   })
 
   it("should fail on unparsable XML", async () => {
-    const spy = jest.spyOn(documentApi, 'fetchText').mockResolvedValue(unparsableXml)
+    const spy = mockFetchText.mockResolvedValue(unparsableXml)
 
-    await expect(documentApi.get(mockDocumentName, "xml", "original")).
+    await expect(DocumentApi.get(mockDocumentName, "xml", "original")).
       rejects.toMatchObject(new ApiError(false, "parse failed", expect.any(String)))
 
     spy.mockRestore()

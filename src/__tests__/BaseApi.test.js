@@ -26,12 +26,10 @@ describe("fetching data", () => {
 
   const mockNetworkError = new TypeError("network error")
 
-  const baseApi = new BaseApi()
-
   it("calls fetch with an XML Accept header when called with format=xml and returns the content as text", async () => {
     fetch.mockResponseOnce(mockReturnXmlMinimal)
 
-    const result = await baseApi.fetchText(mockUrl, "xml")
+    const result = await BaseApi.fetchText(mockUrl, "xml")
     expect(global.fetch).toHaveBeenCalledTimes(1)
     expect(fetch.mock.calls[0][0]).toBe(mockUrl)
     expect(fetch.mock.calls[0][1]).toMatchObject({headers: { Accept: "application/xml" }})
@@ -41,7 +39,7 @@ describe("fetching data", () => {
   it("calls fetch with an HTML Accept header when called with format=html and returns the content as text", async () => {
     fetch.mockResponseOnce(mockReturnHtmlMinimal)
 
-    const result = await baseApi.fetchText(mockUrl, "html")
+    const result = await BaseApi.fetchText(mockUrl, "html")
     expect(global.fetch).toHaveBeenCalledTimes(1)
     expect(fetch.mock.calls[0][0]).toBe(mockUrl)
     expect(fetch.mock.calls[0][1]).toMatchObject({headers: { Accept: "text/html" }})
@@ -51,13 +49,13 @@ describe("fetching data", () => {
   it("fails with a fetch error on network error", async () => {
     fetch.mockRejectOnce(mockNetworkError)
 
-    await expect(baseApi.fetchText(mockUrl, "xml")).rejects.toMatchObject(new ApiError(false, "fetch failed", "network error"))
+    await expect(BaseApi.fetchText(mockUrl, "xml")).rejects.toMatchObject(new ApiError(false, "fetch failed", "network error"))
   })
 
 
   it("fails with an API error when the API returns a failed response", async () => {
     fetch.mockResponseOnce("Bad request", { status: 400 })
-    await expect(baseApi.fetchText(mockUrl, "xml")).rejects.toMatchObject(new ApiError(false, "400", "Bad request"))
+    await expect(BaseApi.fetchText(mockUrl, "xml")).rejects.toMatchObject(new ApiError(false, "400", "Bad request"))
   })
 
 })
