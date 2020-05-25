@@ -12,16 +12,9 @@ import SearchableSelectableResultsList from "../SearchableSelectableResultsList"
 import DiscoveryApi from "../DiscoveryApi"
 
 const mockDiscoveryList = jest.fn()
-jest.mock("../DiscoveryApi", () => {
-  return jest.fn().mockImplementation( () => {
-    return {
-      list: mockDiscoveryList
-    }
-  })
-})
 
 describe("Searchable, selectable results list", () => {
-
+  let realDiscoveryList
   const selectionCallback = jest.fn(s => s)
 
   const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map( (idx) => {
@@ -32,7 +25,7 @@ describe("Searchable, selectable results list", () => {
   })
 
   beforeAll( () => {
-
+    realDiscoveryList = DiscoveryApi.list
     mockDiscoveryList.mockImplementation(
       (apiName, queryString = "", start = 1, itemsPerPage = 5) => {
         return Promise.resolve({
@@ -42,10 +35,11 @@ describe("Searchable, selectable results list", () => {
           items: items.slice(start - 1, start + itemsPerPage - 1)
         })
       })
+    DiscoveryApi.list = mockDiscoveryList
   })
 
-  beforeEach( () => {
-    DiscoveryApi.mockClear()
+  afterAll(() => {
+    DiscoveryApi.list = realDiscoveryList
   })
 
   const ssrl = <SearchableSelectableResultsList api="discovery" itemsPerPage="5" selectionCallback={selectionCallback} />

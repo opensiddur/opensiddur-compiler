@@ -7,6 +7,7 @@ import React from "react"
 import UpdateLanguage from "./UpdateLanguage"
 import UpdateLicense from "./UpdateLicense"
 import UpdateContributors from "./UpdateContributors"
+import UpdateSettings from "./UpdateSettings"
 import UpdateSources from "./UpdateSources"
 import DocumentNode from "./DocumentNode"
 import TeiHeader from "./TeiHeader"
@@ -19,11 +20,6 @@ import TransformerMetadata from "./TransformerMetadata"
 import TeiAnchor from "./TeiAnchor"
 
 // TODO:
-// REFACTOR: Transform should become a class with static methods that just switches to which react node to produce
-// REFACTOR: metadata updates should be simplified to LanguageUpdate(), SourcesUpdate(), ContributorsUpdate(),
-//  each of which may return a metadata update box or only its children
-// REFACTOR: use TransformerContextChain instead of contextSwitch()
-
 // test transform()
 // add tracking of text direction on new document?
 // add tracking of text direction on new element?
@@ -42,6 +38,7 @@ export const META_INLINE_MODE = "inline"
 export const META_LANG = "lang"
 export const META_LICENSE = "license"
 export const META_CONTRIBUTORS = "contributors"
+export const META_SETTINGS = "settings"
 export const META_SOURCES = "sources"
 
 /** indicates a context switch of an element in document order */
@@ -82,7 +79,7 @@ export const CONTRIBUTOR_TYPES = {
 const DEFAULT_CHAIN={
   [DOCUMENT_CONTEXT_SWITCH]: [UpdateLicense, UpdateContributors, UpdateSources],
   [LOCATION_CONTEXT_SWITCH]: [], // also, UpdateSettings, UpdateConditionals...
-  [ELEMENT_CONTEXT_SWITCH]: [UpdateLanguage, Annotate]
+  [ELEMENT_CONTEXT_SWITCH]: [UpdateLanguage, UpdateSettings, Annotate]
 }
 
 export class TransformerContextChain {
@@ -148,90 +145,6 @@ export class ParsedPtr {
  *  transformerRecursionFunction - the function to call when starting processing a new document
  */
 export default class Transformer {
-  /** get an id from an xml node
-   *
-   * @param xml Node the root of the node
-   * @param id the id to find
-   * @return {Node}
-   */
-  static getId(xml, id) {
-    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
-    return docNode.evaluate(`//*[@jf:id='${id}' or @xml:id='${id}']`, docNode,
-      (x) => { return NAMESPACES[x] }, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
-  }
-
-  static getRange(xml, fragment) {
-    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
-    const [ _1, left, right, _2] = fragment.split(/[(,)]/) // range ( left , right )
-    const leftNode = Transformer.getId(xml, left)
-    const rightNode = Transformer.getId(xml, right)
-
-    if (leftNode === rightNode) {
-      // the whole "range" is actually 1 node
-      return [leftNode]
-    }
-    else {
-      // Ideally, this would be a StaticRange
-      // unfortunately, that is supported on fewer browsers
-      const range = docNode.createRange()
-      range.setStartBefore(leftNode)
-      range.setEndAfter(rightNode)
-
-      // this code is derived from https://stackoverflow.com/questions/35475961/how-to-iterate-over-every-node-in-a-selected-range-in-javascript
-      // it should return the nodes in the range from their original context instead of as a document fragment
-      // like range.cloneContents()
-      const nodeIterator = document.createNodeIterator(
-        range.commonAncestorContainer,
-        NodeFilter.SHOW_ALL, // pre-filter
-        {
-          // custom filter
-          acceptNode: function (node) {
-            const inRange = range.intersectsNode(node)
-
-            return inRange ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
-          }
-        }
-      );
-
-      let nodesInRange = []
-      let nodeSet = new Set()
-      while (nodeIterator.nextNode()) {
-        const thisNode = nodeIterator.referenceNode
-        const nodeCompareStart = leftNode.compareDocumentPosition(thisNode)
-        const nodeCompareEnd = rightNode.compareDocumentPosition(thisNode)
-
-        const isStartNode = nodeCompareStart === 0
-        const isEndNode = nodeCompareEnd === 0
-        const isBeforeStartNode = (nodeCompareStart & Node.DOCUMENT_POSITION_PRECEDING) > 0
-        const isAfterEndNode = (nodeCompareEnd & Node.DOCUMENT_POSITION_FOLLOWING) > 0 &&
-          (nodeCompareEnd & Node.DOCUMENT_POSITION_CONTAINED_BY) === 0
-
-        const keep = (isStartNode || isEndNode || (!isBeforeStartNode && !isAfterEndNode))
-
-        if (keep) {
-          if (!nodeSet.has(thisNode.parentNode)) {
-            nodesInRange.push(thisNode)
-          }
-          nodeSet = nodeSet.add(thisNode)
-        }
-
-      }
-
-      return nodesInRange
-    }
-  }
-
-  /** get a fragment
-   * @param xml Node
-   * @param fragment string
-   * @return a List[Node] containing the fragment
-   */
-  static getFragment(xml, fragment) {
-    return (fragment.startsWith("range")) ?
-      Transformer.getRange(xml, fragment) :
-      [Transformer.getId(xml, fragment)]
-  }
-
   static traverseChildren(xml, props) {
     console.log("traverseChildren: ", xml.hasChildNodes(), Array.from(xml.childNodes))
     if (xml.hasChildNodes()) {
@@ -310,7 +223,7 @@ export default class Transformer {
     props.chain = contextSwitch
     props.xmlDoc = doc
     console.log("apply- props",props)
-    return contextSwitch.next(props)
+    return props.nodes.map(node => contextSwitch.next(Object.assign(props, {nodes: [node]})))
   }
 
   static applyTo(xmlList, standardProps, contextSwitchLevel=ELEMENT_CONTEXT_SWITCH) {

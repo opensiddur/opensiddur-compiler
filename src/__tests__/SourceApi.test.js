@@ -7,7 +7,7 @@ import "@testing-library/react"
 import SourceApi, {Source, SourceLevel, SourceReader} from "../SourceApi"
 import {TEI_NS} from "../Transformer"
 import DocumentApi from "../DocumentApi"
-import {ApiError} from "../BaseApi"
+import BaseApi, {ApiError} from "../BaseApi"
 
 const text2xml = (txt) => {
   return new DOMParser().parseFromString(txt, "application/xml")
@@ -324,12 +324,18 @@ describe("Source", () => {
 })
 
 describe("source API", () => {
-  const sourceApi = new SourceApi()
-
   const mockSourceName = "mocksource"
   const unparsableXml = "<testXml></closeADifferentTag>"
 
+  const mockFetchText = jest.fn()
+
   let windowSpy
+  let realFetchText
+
+  beforeAll(() => {
+    realFetchText = BaseApi.fetchText
+    BaseApi.fetchText = mockFetchText
+  })
 
   beforeEach(() => {
     windowSpy = jest.spyOn(global, 'window', 'get')
@@ -345,11 +351,15 @@ describe("source API", () => {
     windowSpy.mockRestore()
   })
 
+  afterAll(() => {
+    BaseApi.fetchText = realFetchText
+  })
+
 
   it("should fetch and parse a source document", async () => {
-    const spy = jest.spyOn(sourceApi, 'fetchText').mockResolvedValue(fullSource)
+    const spy = mockFetchText.mockResolvedValue(fullSource)
 
-    const result = await sourceApi.get(mockSourceName)
+    const result = await SourceApi.get(mockSourceName)
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy.mock.calls[0][0]).toMatchObject(
       new URL(`https://test.example.com/api/data/sources/${mockSourceName}`))
@@ -364,9 +374,9 @@ describe("source API", () => {
   })
 
   it("should fail on unparsable XML", async () => {
-    const spy = jest.spyOn(sourceApi, 'fetchText').mockResolvedValue(unparsableXml)
+    const spy = mockFetchText.mockResolvedValue(unparsableXml)
 
-    await expect(sourceApi.get(mockSourceName)).
+    await expect(SourceApi.get(mockSourceName)).
     rejects.toMatchObject(new ApiError(false, "parse failed", expect.any(String)))
 
     spy.mockRestore()

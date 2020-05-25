@@ -30,8 +30,7 @@ it("correctly parses a valid discovery API HTML", () => {
             </ul>
         </body>
     </html>`
-  const discoveryApi = new DiscoveryApi()
-  const result = discoveryApi.parseDiscoveryHtml(html)
+  const result = DiscoveryApi.parseDiscoveryHtml(html)
 
   expect(result.startIndex).toBe(1)
   expect(result.endIndex).toBe(3)
@@ -107,12 +106,10 @@ describe("fetching data", () => {
 
   const mockNetworkError = new TypeError("network error")
 
-  const discoveryApi = new DiscoveryApi()
-
   it("calls fetch with no query string if none is provided", async () => {
     fetch.mockResponseOnce(mockReturnMinimal)
 
-    await discoveryApi.list("discovery")
+    await DiscoveryApi.list("discovery")
     expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(fetch.mock.calls[0][0]).toMatchObject(new URL("https://test.example.com/api/data/discovery?start=1&max-results=100"))
   })
@@ -120,7 +117,7 @@ describe("fetching data", () => {
   it("calls fetch with query parameters if they are provided", async () => {
     fetch.mockResponseOnce(mockReturnMinimal)
 
-    await discoveryApi.list("discovery", "query one", 10, 50)
+    await DiscoveryApi.list("discovery", "query one", 10, 50)
 
     expect(global.fetch).toHaveBeenCalledTimes(1)
     expect(fetch.mock.calls[0][0]).toMatchObject(new URL(
@@ -130,7 +127,7 @@ describe("fetching data", () => {
   it("calls fetch with quoted query parameters if they are provided", async () => {
     fetch.mockResponseOnce(mockReturnMinimal)
 
-    await discoveryApi.list("discovery", "\"query one\"", 10, 50)
+    await DiscoveryApi.list("discovery", "\"query one\"", 10, 50)
 
     expect(global.fetch).toHaveBeenCalledTimes(1)
     expect(fetch.mock.calls[0][0]).toMatchObject(new URL(
@@ -141,7 +138,7 @@ describe("fetching data", () => {
   it("fetches and parses discovery data, if everything works right", async () => {
     fetch.mockResponseOnce(mockReturnMinimal)
 
-    let result = await discoveryApi.list("discovery")
+    let result = await DiscoveryApi.list("discovery")
 
     expect(global.fetch).toHaveBeenCalledTimes(1)
     expect(fetch.mock.calls[0][0]).toMatchObject(new URL("https://test.example.com/api/data/discovery?start=1&max-results=100"))
@@ -152,27 +149,27 @@ describe("fetching data", () => {
   it("returns a failed promise if fetch returns a failed promise",  async () => {
     fetch.mockRejectOnce(mockNetworkError)
 
-    await expect(discoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "fetch failed", "network error"))
+    await expect(DiscoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "fetch failed", "network error"))
 
   })
 
   it("returns a failed promise if fetch throws an exception", async () => {
     fetch.mockImplementation( () => { throw new Error("test error") } )
 
-    await expect(discoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "fetch failed", "test error"))
+    await expect(DiscoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "fetch failed", "test error"))
 
   })
 
   it("returns a failed promise if the data are not parsable as a discovery API", async () => {
     fetch.mockResponseOnce(notDiscoveryHtml)
 
-    await expect(discoveryApi.list("discovery")).rejects.toMatchObject({success: false, status: "parse failed"})
+    await expect(DiscoveryApi.list("discovery")).rejects.toMatchObject({success: false, status: "parse failed"})
   })
 
   it("returns a failed promise if fetch returns not OK",  async () => {
     fetch.mockResponseOnce("Bad request", { status: 400 })
 
-    await expect(discoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "400", "Bad request"))
+    await expect(DiscoveryApi.list("discovery")).rejects.toMatchObject(new ApiError(false, "400", "Bad request"))
 
   })
 

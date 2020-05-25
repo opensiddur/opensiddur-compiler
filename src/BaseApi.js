@@ -20,7 +20,7 @@ export class ApiError {
 }
 
 export default class BaseApi {
-  async fetchText(url, format) {
+  static async fetchText(url, format) {
     console.assert(ACCEPTED_FORMATS.includes(format), `format '${format}' must be in ACCEPTED_FORMATS`)
 
     let response

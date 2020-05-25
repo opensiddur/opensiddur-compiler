@@ -15,7 +15,6 @@ export default function SearchableSelectableResultsList(props) {
   * itemsPerPage: number of items to show for each page, default 20
   * selectionCallback - callback to be called when a selection is made
   */
-  const discoveryApi = new DiscoveryApi()
 
   // these will be used on the next fetch
   const [startIndex, setStartIndex] = useState(1)
@@ -25,7 +24,7 @@ export default function SearchableSelectableResultsList(props) {
 
   const fetchListData = () => {
     const fetcher = async () => {
-      const newResults = await discoveryApi.list(props.api, queryString, startIndex, itemsPerPage)
+      const newResults = await DiscoveryApi.list(props.api, queryString, startIndex, itemsPerPage)
       setResultData(newResults)
     }
 

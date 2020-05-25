@@ -27,10 +27,10 @@ import BaseApi, {ApiError} from "./BaseApi"
 
 const DEFAULT_ITEMS_PER_PAGE = 100
 
-export default class DiscoveryApi extends BaseApi {
+export default class DiscoveryApi {
 
   /* parse an HTML response object */
-  parseDiscoveryHtml(responseText) {
+  static parseDiscoveryHtml(responseText) {
     const dom = new DOMParser().parseFromString(responseText, "text/html")
     const startIndex = parseInt(dom.querySelector("meta[name=startIndex]").content)
     const itemsPerPage = parseInt(dom.querySelector("meta[name=itemsPerPage]").content)
@@ -77,7 +77,7 @@ export default class DiscoveryApi extends BaseApi {
    * Returns a promise that either contains a JSON representation of the listed items
    * or contains an error, represented as JSON.
    */
-  async list(apiName, queryString="", start=1, itemsPerPage=DEFAULT_ITEMS_PER_PAGE) {
+  static async list(apiName, queryString="", start=1, itemsPerPage=DEFAULT_ITEMS_PER_PAGE) {
     const url = new URL(`/api/data/${apiName}`, window.location.origin)
     const params = {
       q: queryString,
@@ -88,9 +88,9 @@ export default class DiscoveryApi extends BaseApi {
       if (params[key] !== "") url.searchParams.append(key, params[key])
     })
 
-    const responseText = await this.fetchText(url, "html")
+    const responseText = await BaseApi.fetchText(url, "html")
     try {
-      return this.parseDiscoveryHtml(responseText)
+      return DiscoveryApi.parseDiscoveryHtml(responseText)
     }
     catch (error) {
       throw new ApiError(false, "parse failed", error.message)
