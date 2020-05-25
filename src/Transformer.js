@@ -215,15 +215,18 @@ export default class Transformer {
   static apply(standardProps,
         contextSwitchLevel=DOCUMENT_CONTEXT_SWITCH) {
     const firstXml = standardProps.nodes[0]
-    const contextSwitch = new TransformerContextChain(contextSwitchLevel)
-    console.log("contextSwitch=",contextSwitch)
     const doc = (firstXml.nodeType === Node.DOCUMENT_NODE) ? firstXml : firstXml.ownerDocument
     const props = Object.assign({}, standardProps)
     props.metadata = props.metadata || new TransformerMetadata()
-    props.chain = contextSwitch
     props.xmlDoc = doc
     console.log("apply- props",props)
-    return props.nodes.map(node => contextSwitch.next(Object.assign(props, {nodes: [node]})))
+    return props.nodes.map(node => {
+      const contextSwitch = new TransformerContextChain(contextSwitchLevel)
+      return contextSwitch.next(Object.assign(props, {
+        chain: contextSwitch,
+        nodes: [node]
+      }))
+    })
   }
 
   static applyTo(xmlList, standardProps, contextSwitchLevel=ELEMENT_CONTEXT_SWITCH) {

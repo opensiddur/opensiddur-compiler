@@ -21,6 +21,7 @@ export default function Annotate(props) {
       xml.hasAttribute("jf:conditional-instruction") && xml.getAttribute("jf:conditional-instruction")
     ].filter(_ => _)[0]
   )
+
   if (annotationPtr) {
     const parsedPtr = ParsedPtr.parsePtr(annotationPtr)
     return [
