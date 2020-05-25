@@ -4,7 +4,7 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
-import { render } from '@testing-library/react'
+import { render, cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
 import TransformerMetadata from "../TransformerMetadata"
@@ -25,7 +25,7 @@ describe("Annotate", () => {
   it("recurses through the referenced annotation using the 'notes' API", () => {
     const metadata = new TransformerMetadata()
 
-    const attributeNames = ["jf:annotation", "jf:conditional-instruction"]
+    const attributeNames = ["special", "jf:annotation", "jf:conditional-instruction"]
 
     attributeNames.forEach( (attributeName) => {
       const recursionFunction = jest.fn()
@@ -37,7 +37,7 @@ describe("Annotate", () => {
 
       const { container } = render(<Annotate nodes={xmlNode} metadata={metadata} chain={mockChain}
         transformerRecursionFunction={recursionFunction}
-        {... ((attributeName === "jf:annotation") ? {} : { attribute: attributeName} )} />)
+        {... ((attributeName !== "special") ? {} : { attribute: attributeName} )} />)
 
       expect(recursionFunction).toHaveBeenCalledTimes(1)
       expect(recursionFunction.mock.calls[0][0]).toBe("notationdocument")
@@ -48,6 +48,7 @@ describe("Annotate", () => {
       expect(mockChainNext).toHaveBeenCalledTimes(1)
       recursionFunction.mockReset()
       mockChainNext.mockReset()
+      cleanup()
     })
 
   })

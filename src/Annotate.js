@@ -14,10 +14,15 @@ import {ParsedPtr} from "./Transformer"
  */
 export default function Annotate(props) {
   const xml = props.nodes[0]
-  const attribute = props.attribute || "jf:annotation"
-  if (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute(attribute)) {
-    const annotation = xml.getAttribute(attribute)
-    const parsedPtr = ParsedPtr.parsePtr(annotation)
+  const annotationPtr = (xml.nodeType === Node.ELEMENT_NODE) && (
+    [ // get the first nonempty attribute
+      props.attribute && xml.hasAttribute(props.attribute) && xml.getAttribute(props.attribute),
+      xml.hasAttribute("jf:annotation") && xml.getAttribute("jf:annotation"),
+      xml.hasAttribute("jf:conditional-instruction") && xml.getAttribute("jf:conditional-instruction")
+    ].filter(_ => _)[0]
+  )
+  if (annotationPtr) {
+    const parsedPtr = ParsedPtr.parsePtr(annotationPtr)
     return [
       props.transformerRecursionFunction(parsedPtr.documentName, parsedPtr.fragment, props.metadata, "notes"),
       props.chain.next(props)
