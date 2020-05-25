@@ -87,8 +87,9 @@ function settingsStructureFromXml(xmlElements) {
 }
 
 
+/** Parse settings from a single element */
 export function parseSettings(xmlElements) {
-  return settingsStructureFromXml(xmlElements)
+  return settingsStructureFromXml(xmlElements)[0]
 }
 
 /** merge updates into originalSettings.
@@ -119,15 +120,12 @@ export default function UpdateSettings(props) {
 
       const getSettingsFrom = async (uri) => {
         const parsedSettingUri = ParsedPtr.parsePtr(uri)
-        console.log("$$$ get settings", uri, parsedSettingUri)
         const documentName = parsedSettingUri.documentName || props.documentName
         const documentApi = parsedSettingUri.apiName || props.documentApi
         const settingsResource = await DocumentApi.get(documentName, "xml", documentApi)
         const settingsXml = parsedSettingUri.fragment ?
           DocumentApi.getFragment(settingsResource, parsedSettingUri.fragment) : settingsResource.documentElement
-        console.log(settingsXml)
         const parsedSettings = parseSettings(settingsXml)
-        console.log("$$$ parsed settings from ", uri, " = ", parsedSettings)
         return parsedSettings
       }
 
@@ -135,7 +133,6 @@ export default function UpdateSettings(props) {
         const newSettingsUris = xml.getAttribute("jf:set").split(/\s+/)
         const allNewSettings = await Promise.all(newSettingsUris.map(async (_) => getSettingsFrom(_)))
         const updatedSettings = allNewSettings.reduce(mergeSettings, currentSettings)
-        console.log("$$$ updating settings to", updatedSettings)
         setNextMetadata(props.metadata.set(META_SETTINGS, updatedSettings))
       }
 
