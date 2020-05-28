@@ -5,7 +5,8 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import BaseApi, {ApiError} from "./BaseApi"
-import {NAMESPACES} from "./Transformer"
+import {NAMESPACES, ParsedPtr} from "./Transformer"
+import {parseSettings} from "./UpdateSettings"
 
 export default class DocumentApi {
   /** get an id from an xml node
@@ -115,5 +116,16 @@ export default class DocumentApi {
     else {
       throw new ApiError(false, "parse failed", error.textContent)
     }
+  }
+
+  /** Get XML directly from a URI (which may have a fragment */
+  static async getUri(uri, defaultDocumentName, defaultApi) {
+    const parsedUri = ParsedPtr.parsePtr(uri)
+    const documentName = parsedUri.documentName || defaultDocumentName
+    const documentApi = parsedUri.apiName || defaultApi
+    const resource = await DocumentApi.get(documentName, "xml", documentApi)
+    const xml = parsedUri.fragment ?
+      DocumentApi.getFragment(resource, parsedUri.fragment) : resource.documentElement
+    return xml
   }
 }
