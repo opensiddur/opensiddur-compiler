@@ -12,7 +12,7 @@
  * }
  */
 import React, {useEffect, useState} from "react"
-import {META_SETTINGS, ParsedPtr} from "./Transformer"
+import {META_SETTINGS} from "./Transformer"
 import DocumentApi from "./DocumentApi"
 
 /** extract an expected feature value

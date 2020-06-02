@@ -204,7 +204,7 @@ export default function UpdateConditionals(props) {
   // this state holds the parsed conditions
   const [conditions, setConditions] = useState([])
   // this state holds the evaluation
-  const [conditionalEvaluation, setConditionalEvaluation] = useState(CONDITIONAL_MAYBE)
+  const [conditionalEvaluation, setConditionalEvaluation] = useState(CONDITIONAL_YES)
   const settings = props.metadata.get(META_SETTINGS)
 
   const fetchConditions = () => {
@@ -232,7 +232,7 @@ export default function UpdateConditionals(props) {
 
   if (hasUpdates) {
     return (<div className={`UpdateConditionals ${conditionalClass[conditionalEvaluation]}`}>
-      { props.chain.next(props) }
+      { conditionalEvaluation !== CONDITIONAL_NO &&  props.chain.next(props) }
     </div>)
   }
   else return props.chain.next(props)

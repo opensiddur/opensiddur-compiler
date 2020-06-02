@@ -4,7 +4,7 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
-import {
+import UpdateConditionals, {
   all,
   oneOf,
   not,
@@ -16,6 +16,12 @@ import {
   CONDITIONAL_OFF,
   evaluate
 } from "../UpdateConditionals"
+import {text2xml} from "../TestUtils"
+import {META_SETTINGS, TransformerContextChain} from "../Transformer"
+import {cleanup, render, wait} from "@testing-library/react"
+import '@testing-library/jest-dom/extend-expect'
+import TransformerMetadata from "../TransformerMetadata"
+import DocumentApi from "../DocumentApi"
 
 describe("all", () => {
   /*
@@ -178,4 +184,122 @@ describe("evaluate", () => {
 
     expect(result).toBe(CONDITIONAL_YES)
   })
+})
+
+describe("UpdateConditionals", () => {
+  const settingsY = {
+    fs1: { f1: "YES" }
+  }
+
+  const settingsN = {
+    fs1: { f1: "NO" }
+  }
+
+  const settingsM = {
+    fs1: { f1: "MAYBE" }
+  }
+
+  const condition = text2xml(`<tei:fs type="fs1" 
+    xmlns:tei="http://www.teic-c.org/ns/1.0"
+    xmlns:j="http://jewishliturgy.org/ns/jlptei/1.0">
+        <tei:f name="f1"><j:yes/></tei:f>
+    </tei:fs>`).documentElement
+
+  const nextChain = jest.fn()
+
+  let realGetUri
+  const mockGetUri = jest.fn()
+
+  beforeAll( () => {
+    realGetUri = DocumentApi.getUri
+    DocumentApi.getUri = mockGetUri
+  })
+
+  beforeEach( () => {
+    mockGetUri.mockReset()
+    nextChain.mockReset()
+    cleanup()
+  })
+
+  afterAll( () => {
+    DocumentApi.getUri = realGetUri
+  })
+
+  const docName = "mydoc"
+  const docApi = "original"
+
+  it("passes through if there are no conditions", () => {
+    const hasNoUpdates = text2xml(`<hasNoUpdates><child>child text</child></hasNoUpdates>`).documentElement
+    const chain = new TransformerContextChain(0, null, [nextChain])
+    const initialMetadata = new TransformerMetadata().set(META_SETTINGS, settingsY)
+
+    nextChain.mockReturnValue("Chained")
+
+    const { queryByText } = render(<UpdateConditionals nodes={[hasNoUpdates]} metadata={initialMetadata} chain={chain}/>)
+
+    expect(nextChain).toHaveBeenCalled()
+    expect(nextChain.mock.calls[0][0]).toMatchObject({
+      metadata: initialMetadata
+    })
+
+    expect(queryByText("Chained")).toBeInTheDocument()
+  })
+
+  it("turns children off if the condition evaluates to NO", async () => {
+    const hasUpdates = text2xml(`<hasUpdates xmlns:jf="http://jewishliturgy.org/ns/jlptei/flat/1.0" 
+        jf:conditionals="/data/conditionals/evaluatesTo#no"><child>child text</child></hasUpdates>`).documentElement
+    const chain = new TransformerContextChain(0, null, [nextChain])
+    const initialMetadata = new TransformerMetadata().set(META_SETTINGS, settingsN)
+
+    nextChain.mockReturnValue("Chained")
+
+    mockGetUri.mockResolvedValue([condition])
+
+    const { container, queryByText } = render(<UpdateConditionals
+      nodes={[hasUpdates]} metadata={initialMetadata} chain={chain}
+      documentName={docName} documentApi={docApi}/>)
+
+    expect(mockGetUri).toHaveBeenCalledTimes(1)
+    expect(mockGetUri.mock.calls[0][0]).toBe("/data/conditionals/evaluatesTo#no")
+    expect(mockGetUri.mock.calls[0][1]).toBe(docName)
+    expect(mockGetUri.mock.calls[0][2]).toBe(docApi)
+
+    await wait()
+
+    expect(queryByText("Chained")).not.toBeInTheDocument()
+    expect(container.querySelector(".UpdateConditionals.ConditionalNo")).toBeInTheDocument()
+  })
+
+  const evalsTo = async (settingsX, conditionalClass) => {
+    const hasUpdates = text2xml(`<hasUpdates xmlns:jf="http://jewishliturgy.org/ns/jlptei/flat/1.0" 
+        jf:conditionals="/data/conditionals/evaluatesTo#something"><child>child text</child></hasUpdates>`).documentElement
+    const chain = new TransformerContextChain(0, null, [nextChain])
+    const initialMetadata = new TransformerMetadata().set(META_SETTINGS, settingsX)
+
+    nextChain.mockReturnValue("Chained")
+
+    mockGetUri.mockResolvedValue([condition])
+
+    const { container, queryByText } = render(<UpdateConditionals
+      nodes={[hasUpdates]} metadata={initialMetadata} chain={chain}
+      documentName={docName} documentApi={docApi}/>)
+
+    await wait(() => mockGetUri.toHaveBeenCalledTimes(2))
+
+    expect(mockGetUri.mock.calls[0][0]).toBe("/data/conditionals/evaluatesTo#something")
+    expect(mockGetUri.mock.calls[0][1]).toBe(docName)
+    expect(mockGetUri.mock.calls[0][2]).toBe(docApi)
+
+    expect(queryByText("Chained")).toBeInTheDocument()
+    expect(container.querySelector(".UpdateConditionals .Conditional" + conditionalClass)).toBeInTheDocument()
+  }
+
+  it("passes to children if the condition evaluates to YES", () => {
+    evalsTo(settingsY, "Yes")
+  })
+
+  it("passes to children if the condition evaluates to MAYBE", () => {
+    evalsTo(settingsM, "Maybe")
+  })
+
 })
