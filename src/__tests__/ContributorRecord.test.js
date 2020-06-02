@@ -13,15 +13,20 @@ import UserApi from "../UserApi"
 import UserInfo from "../UserInfo"
 
 const mockUserGet = jest.fn()
-jest.mock("../UserApi", () => {
-  return jest.fn().mockImplementation( () => ({
-      get: mockUserGet
-  }))
-})
 
 describe("ContributorRecord component", () => {
+  let realUserGet
+  beforeAll( () => {
+    realUserGet = UserApi.get
+    UserApi.get = mockUserGet
+  })
+
   afterEach(() => {
     mockUserGet.mockReset()
+  })
+
+  afterAll( () => {
+    UserApi.get = realUserGet
   })
 
   const userName = "testuser"

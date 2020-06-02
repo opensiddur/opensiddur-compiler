@@ -11,13 +11,12 @@ import UserApi from "./UserApi"
 import UserInfo from "./UserInfo"
 
 export default function ContributorRecord(props) {
-  const userApi = new UserApi()
   const userName = props.user
   const [content, setContent] = useState(new UserInfo(userName, userName, null))
 
   const updateContributor = () => {
     const fetcher = async () => {
-      const userInfo = await userApi.get(userName)
+      const userInfo = await UserApi.get(userName)
 
       setContent(userInfo)
     }

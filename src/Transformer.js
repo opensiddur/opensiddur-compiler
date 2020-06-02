@@ -18,6 +18,7 @@ import GenericElement from "./GenericElement"
 import Annotate from "./Annotate"
 import TransformerMetadata from "./TransformerMetadata"
 import TeiAnchor from "./TeiAnchor"
+import UpdateConditionals from "./UpdateConditionals"
 
 // TODO:
 // test transform()
@@ -78,13 +79,13 @@ export const CONTRIBUTOR_TYPES = {
 
 const DEFAULT_CHAIN={
   [DOCUMENT_CONTEXT_SWITCH]: [UpdateLicense, UpdateContributors, UpdateSources],
-  [LOCATION_CONTEXT_SWITCH]: [], // also, UpdateSettings, UpdateConditionals...
-  [ELEMENT_CONTEXT_SWITCH]: [UpdateLanguage, UpdateSettings, Annotate]
+  [LOCATION_CONTEXT_SWITCH]: [],
+  [ELEMENT_CONTEXT_SWITCH]: [UpdateLanguage, UpdateSettings, UpdateConditionals, Annotate]
 }
 
 export class TransformerContextChain {
-  constructor(level, chain_levels=DEFAULT_CHAIN) {
-    this.chain = [
+  constructor(level, chain_levels=DEFAULT_CHAIN, chain=undefined) {
+    this.chain = chain ? chain : [
       ((level >= DOCUMENT_CONTEXT_SWITCH) ? chain_levels[DOCUMENT_CONTEXT_SWITCH] : []),
       ((level >= LOCATION_CONTEXT_SWITCH) ? chain_levels[LOCATION_CONTEXT_SWITCH] : []),
       ((level >= ELEMENT_CONTEXT_SWITCH) ? chain_levels[ELEMENT_CONTEXT_SWITCH] : [])
@@ -92,12 +93,18 @@ export class TransformerContextChain {
     this.level = level
   }
 
-  next(props) {
-    if (this.chain.length > 0) {
-      return React.createElement(this.chain.pop(), props)
+  next(props, metadata) {
+    const chainLength = this.chain.length
+    const nextProps = Object.assign({}, props)
+    nextProps.chain = new TransformerContextChain(this.level, null, this.chain.slice(0, -1))
+    if (metadata) {
+      nextProps.metadata = metadata
+    }
+    if (chainLength > 0) {
+      return React.createElement(this.chain[chainLength - 1], nextProps)
     }
     else {
-      return Transformer.transform(props)
+      return Transformer.transform(nextProps)
     }
   }
 
@@ -107,9 +114,7 @@ export class TransformerContextChain {
    * @param metadata New metadata
    */
   nextWithMetadataUpdate(props, metadata) {
-    const newProps = Object.assign({}, props) // create a shallow copy
-    newProps.metadata = metadata
-    return this.next(newProps)
+    return this.next(props, metadata)
   }
 }
 
@@ -164,6 +169,11 @@ export default class Transformer {
     }
     else {
       switch (xml.tagName) {
+        case "j:conditions":
+        case "j:links":
+        case "j:settings":
+        case "jf:concurrent":
+          return null
         case "tei:anchor":
           return <TeiAnchor {...standardProps}/>
         case "tei:teiHeader":
@@ -215,15 +225,18 @@ export default class Transformer {
   static apply(standardProps,
         contextSwitchLevel=DOCUMENT_CONTEXT_SWITCH) {
     const firstXml = standardProps.nodes[0]
-    const contextSwitch = new TransformerContextChain(contextSwitchLevel)
-    console.log("contextSwitch=",contextSwitch)
     const doc = (firstXml.nodeType === Node.DOCUMENT_NODE) ? firstXml : firstXml.ownerDocument
     const props = Object.assign({}, standardProps)
     props.metadata = props.metadata || new TransformerMetadata()
-    props.chain = contextSwitch
     props.xmlDoc = doc
     console.log("apply- props",props)
-    return props.nodes.map(node => contextSwitch.next(Object.assign(props, {nodes: [node]})))
+    return props.nodes.map(node => {
+      const contextSwitch = new TransformerContextChain(contextSwitchLevel)
+      return contextSwitch.next(Object.assign(props, {
+        chain: contextSwitch,
+        nodes: [node]
+      }))
+    })
   }
 
   static applyTo(xmlList, standardProps, contextSwitchLevel=ELEMENT_CONTEXT_SWITCH) {

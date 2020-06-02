@@ -5,7 +5,7 @@
  */
 import React from "react"
 import {text2xml} from "../TestUtils"
-import UpdateSettings, {mergeSettings, parseSettings} from "../UpdateSettings"
+import UpdateSettings, {mergeSettings, parseSettings, settingsStructureFromXml} from "../UpdateSettings"
 import TransformerMetadata from "../TransformerMetadata"
 import {cleanup, render, wait} from "@testing-library/react"
 import '@testing-library/jest-dom/extend-expect'
@@ -68,6 +68,73 @@ describe("parseSettings", () => {
         value: "my_value"
       }
     }
+
+    expect(result).toMatchObject(expected)
+  })
+})
+
+describe("SettingsStructureFromXml", () => {
+  it("parses special conditional structures", () => {
+    const allXml = text2xml(`
+    <j:all
+        xmlns:tei="http://www.tei-c.org/ns/1.0" 
+        xmlns:j="http://jewishliturgy.org/ns/jlptei/1.0">
+      >
+        <tei:fs type="fs1"><tei:f name="f1"><j:yes/></tei:f></tei:fs>
+        <tei:fs type="fs2"><tei:f name="f2"><j:no/></tei:f></tei:fs>
+    </j:all>`).documentElement
+
+    const anyXml = text2xml(`
+    <j:any
+        xmlns:tei="http://www.tei-c.org/ns/1.0" 
+        xmlns:j="http://jewishliturgy.org/ns/jlptei/1.0">
+      >
+        <tei:fs type="fs1"><tei:f name="f1"><j:yes/></tei:f></tei:fs>
+        <tei:fs type="fs2"><tei:f name="f2"><j:no/></tei:f></tei:fs>
+    </j:any>`).documentElement
+
+    const notXml = text2xml(`
+    <j:not
+        xmlns:tei="http://www.tei-c.org/ns/1.0" 
+        xmlns:j="http://jewishliturgy.org/ns/jlptei/1.0">
+      >
+        <tei:fs type="fs1"><tei:f name="f1"><j:yes/></tei:f></tei:fs>
+    </j:not>`).documentElement
+
+    const oneOfXml = text2xml(`
+    <j:oneOf
+        xmlns:tei="http://www.tei-c.org/ns/1.0" 
+        xmlns:j="http://jewishliturgy.org/ns/jlptei/1.0">
+      >
+        <tei:fs type="fs1"><tei:f name="f1"><j:yes/></tei:f></tei:fs>
+        <tei:fs type="fs2"><tei:f name="f2"><j:no/></tei:f></tei:fs>
+    </j:oneOf>`).documentElement
+
+    const result=settingsStructureFromXml([anyXml, allXml, oneOfXml, notXml])
+
+    const expected = [
+      {
+        "opensiddur-client:operator:any": [
+          {fs1: {f1: "YES"}},
+          {fs2: {f2: "NO"}}
+        ]
+      },
+      {
+        "opensiddur-client:operator:all": [
+          {fs1: {f1: "YES"}},
+          {fs2: {f2: "NO"}}
+        ]
+      },
+      {
+        "opensiddur-client:operator:oneOf": [
+          {fs1: {f1: "YES"}},
+          {fs2: {f2: "NO"}}
+        ]
+      },
+      {
+        "opensiddur-client:operator:not": [{fs1: {f1: "YES"}}]
+      }
+    ]
 
     expect(result).toMatchObject(expected)
   })

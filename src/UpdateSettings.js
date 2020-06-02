@@ -12,7 +12,7 @@
  * }
  */
 import React, {useEffect, useState} from "react"
-import {META_SETTINGS, ParsedPtr} from "./Transformer"
+import {META_SETTINGS} from "./Transformer"
 import DocumentApi from "./DocumentApi"
 
 /** extract an expected feature value
@@ -56,12 +56,23 @@ function extractFeatureValue(xml) {
 
 }
 
+export const CONDITIONAL_OPERATOR_PREFIX = "opensiddur-client:operator:"
+
 /** Given a XML node that contains a settings structure, build a JSON object
  * @param {Array<Node>} xmlElements
  */
-function settingsStructureFromXml(xmlElements) {
+export function settingsStructureFromXml(xmlElements) {
   return xmlElements.map( (xml) => {
     switch(xml.tagName) {
+      case "j:any":
+      case "j:all":
+      case "j:oneOf":
+      case "j:not":
+        const operator = CONDITIONAL_OPERATOR_PREFIX + xml.tagName.split(":")[1]
+        return {
+          [operator] : settingsStructureFromXml(
+            Array.from(xml.childNodes).filter( node => node.nodeType === Node.ELEMENT_NODE))
+        }
       case "tei:fs":
         const fsType = xml.getAttribute("type")
         return {
@@ -98,7 +109,6 @@ export function parseSettings(xmlElements) {
  * @return a copy of originalSettings with updates
  */
 export function mergeSettings(originalSettings, updates) {
-  console.log("$$$mergeSettings. original=", originalSettings, " updates=", updates)
   const updated = JSON.parse(JSON.stringify(originalSettings))
   for (const updateKey of Object.keys(updates)) {
     const originalOfKey = originalSettings.hasOwnProperty(updateKey) ? originalSettings[updateKey] : {}
@@ -119,14 +129,8 @@ export default function UpdateSettings(props) {
       const currentSettings = props.metadata.get(META_SETTINGS) || {}
 
       const getSettingsFrom = async (uri) => {
-        const parsedSettingUri = ParsedPtr.parsePtr(uri)
-        const documentName = parsedSettingUri.documentName || props.documentName
-        const documentApi = parsedSettingUri.apiName || props.documentApi
-        const settingsResource = await DocumentApi.get(documentName, "xml", documentApi)
-        const settingsXml = parsedSettingUri.fragment ?
-          DocumentApi.getFragment(settingsResource, parsedSettingUri.fragment) : settingsResource.documentElement
-        const parsedSettings = parseSettings(settingsXml)
-        return parsedSettings
+        const settingsXml = await DocumentApi.getUri(uri, props.documentName, props.documentApi)
+        return parseSettings(settingsXml)
       }
 
       const getAllNewSettings = async () => {
