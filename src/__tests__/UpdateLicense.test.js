@@ -92,7 +92,7 @@ describe("UpdateLicense", () => {
     const chain = new TransformerContextChain(DOCUMENT_CONTEXT_SWITCH)
     const mockNext = jest.fn()
     mockNext.mockReturnValue(null)
-    chain.next = mockNext
+    chain.nextWithMetadataUpdate = mockNext
 
     TransformerMetadata.contextLicense = mockContextLicense
     mockContextLicense.mockReturnValue(newLicenseValue)
@@ -109,7 +109,7 @@ describe("UpdateLicense", () => {
     fireEvent.click(getByRole("toggle"))
     expect(queryByText(/public domain/i)).toBeInTheDocument()
     // (2) metadata is updated at a lower level
-    expect(mockNext.mock.calls[0][0].metadata.get(META_LICENSE)).toBe(newLicenseValue)
+    expect(mockNext.mock.calls[0][1].get(META_LICENSE)).toBe(newLicenseValue)
   })
 
   it("renders when the context license is different from the new license", () => {
@@ -120,7 +120,7 @@ describe("UpdateLicense", () => {
     const chain = new TransformerContextChain(DOCUMENT_CONTEXT_SWITCH)
     const mockNext = jest.fn()
     mockNext.mockReturnValue(null)
-    chain.next = mockNext
+    chain.nextWithMetadataUpdate = mockNext
 
     TransformerMetadata.contextLicense = mockContextLicense
     mockContextLicense.mockReturnValue(newLicenseValue)
@@ -137,7 +137,7 @@ describe("UpdateLicense", () => {
     fireEvent.click(getByRole("toggle"))
     expect(queryByText(/public domain/i)).toBeInTheDocument()
     // (2) metadata is updated at a lower level
-    expect(mockNext.mock.calls[0][0].metadata.get(META_LICENSE)).toBe(newLicenseValue)
+    expect(mockNext.mock.calls[0][1].get(META_LICENSE)).toBe(newLicenseValue)
 
   })
 })

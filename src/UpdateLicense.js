@@ -21,7 +21,6 @@ export default function UpdateLicense(props) {
   const needsChange = full && (newLicense && (!oldLicense || oldLicense !== newLicense))
 
   if (needsChange) {
-    console.log("***UpdateLicense with needsChange:", props)
     return <div className="UpdateLicense">
       <Expandable icon={faGavel} title="Copyright license">
         <SmallLicenseBox license={newLicense}/>
@@ -31,7 +30,6 @@ export default function UpdateLicense(props) {
     }</div>
   }
   else {
-    console.log("***UpdateLicense needsChange false", props)
     return props.chain.next(props)
   }
 }

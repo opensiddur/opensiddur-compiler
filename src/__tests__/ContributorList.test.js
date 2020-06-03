@@ -13,13 +13,15 @@ import UserApi from "../UserApi"
 import UserInfo from "../UserInfo"
 // this is kind of ugly, since we're mocking something called downstream...
 const mockUserGet = jest.fn()
-jest.mock("../UserApi", () => {
-  return jest.fn().mockImplementation( () => ({
-    get: mockUserGet
-  }))
-})
 
 describe("ContributorList", () => {
+  let realUserGet
+
+  beforeAll( () => {
+    realUserGet = UserApi.get
+    UserApi.get = mockUserGet
+  })
+
   beforeEach( () => {
     mockUserGet.mockImplementation( (userName) => {
       return Promise.resolve(new UserInfo(null, userName, null)) } )
@@ -27,6 +29,10 @@ describe("ContributorList", () => {
 
   afterEach( () => {
     mockUserGet.mockReset()
+  })
+
+  afterAll( () => {
+    UserApi.get = realUserGet
   })
 
   it("lists no contributors if all the types are empty", () => {
