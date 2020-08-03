@@ -112,5 +112,4 @@ export default class TransformerMetadata {
     }
     return sources.length > 0 ? sources: null
   }
-
 }
