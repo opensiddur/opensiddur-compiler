@@ -61,9 +61,10 @@ export default function ViewTransformer(props) {
       const hasTranslationRedirect = await ViewTransformerUtils.translationRedirect(document, api, metadata)
       const redirectedContent = async () => {
         console.log("Document ", document, " has a translation redirect to ", hasTranslationRedirect)
-        const redirectContent = await DocumentApi.get(hasTranslationRedirect, "xml", "linkage", "combined")
+        const linkageDocumentName = hasTranslationRedirect.split("/").pop()
+        const redirectContent = await DocumentApi.get(linkageDocumentName, "xml", "linkage", "combined")
         redirectContent.normalize()
-        return Transformer.redirectFragment(document, fragment, redirectContent)
+        return [Transformer.redirectFragment(document, fragment, redirectContent)]
       }
       const unredirectedContent =  async () => {
         const docContent = await DocumentApi.get(document, "xml", api, originalSuffix)

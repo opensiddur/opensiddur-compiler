@@ -3,7 +3,7 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import {CONTRIBUTOR_TYPES, TEI_NS} from "./Transformer"
+import {nsResolver, CONTRIBUTOR_TYPES, TEI_NS} from "./Transformer"
 import {ContextSourceInfo} from "./ContextSourceInfo"
 
 export default class TransformerMetadata {
@@ -96,7 +96,6 @@ export default class TransformerMetadata {
    */
   static contextSources(xml) {
     const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
-    const nsResolver = docNode.createNSResolver( docNode.documentElement)
     const sourceIterator = docNode.evaluate("//tei:sourceDesc/tei:bibl", docNode,
       nsResolver, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null)
     let sources = []

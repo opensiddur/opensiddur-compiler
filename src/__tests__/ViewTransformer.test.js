@@ -97,9 +97,10 @@ describe("ViewTransformer component", () => {
   })
 
   it("renders a requested transformed document with translation redirect", async () => {
+    const redirectApi = "/api/data/linkage/redirectedTo"
     const redirectDocument = "redirectedTo"
 
-    mockUtilsTranslationRedirect.mockResolvedValue(redirectDocument)
+    mockUtilsTranslationRedirect.mockResolvedValue(redirectApi)
     mockDocGet.mockResolvedValue(docContentXml)
     mockRedirectFragment.mockResolvedValue(transContentXml)
     mockApply.mockReturnValueOnce(transformedDocument)

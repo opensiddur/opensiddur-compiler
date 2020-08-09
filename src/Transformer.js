@@ -20,6 +20,7 @@ import TransformerMetadata from "./TransformerMetadata"
 import TeiAnchor from "./TeiAnchor"
 import UpdateConditionals from "./UpdateConditionals"
 import DocumentApi from "./DocumentApi"
+import JfParallelGrp from "./JfParallelGrp"
 
 // TODO:
 // test transform()
@@ -32,8 +33,6 @@ import DocumentApi from "./DocumentApi"
 // display license, contributor, source lists at the end of the document [not in this class]
 // add support for tracking settings via jf:set and metadata to a global list
 // add support for live conditional evaluation
-// add support for notes (external)
-// add support for instructions
 // add styling
 
 export const META_INLINE_MODE = "inline"
@@ -65,6 +64,10 @@ export const NAMESPACES = {
   "j": J_NS,
   "jf": JF_NS,
   "xml": XML_NS
+}
+
+export function nsResolver(ns) {
+  return NAMESPACES[ns] || null
 }
 
 export const CONTRIBUTOR_TYPES = {
@@ -156,10 +159,9 @@ export class ParsedPtr {
  *  transformerRecursionFunction - the function to call when starting processing a new document
  */
 export default class Transformer {
-  static traverseChildren(xml, props) {
-    console.log("traverseChildren: ", xml.hasChildNodes(), Array.from(xml.childNodes))
+  static traverseChildren(xml, props, level=ELEMENT_CONTEXT_SWITCH) {
     if (xml.hasChildNodes()) {
-      return Transformer.applyTo(Array.from(xml.childNodes), props, ELEMENT_CONTEXT_SWITCH)
+      return Transformer.applyTo(Array.from(xml.childNodes), props, level)
     }
     else return null
   }
@@ -180,6 +182,8 @@ export default class Transformer {
         case "j:settings":
         case "jf:concurrent":
           return null
+        case "jf:parallelGrp":
+          return <JfParallelGrp {...standardProps}/>
         case "tei:anchor":
           return <TeiAnchor {...standardProps}/>
         case "tei:teiHeader":
@@ -198,7 +202,6 @@ export default class Transformer {
    * @returns {string|Array|[]|*|[]|undefined}
    */
   static transform(standardProps) {
-    console.log("***transform", standardProps)
     const xmlList = standardProps.nodes
     return xmlList.map( (xml) => {
       // set the next context node
@@ -214,7 +217,7 @@ export default class Transformer {
         case Node.ELEMENT_NODE:
           return Transformer.transformElement(nextProps)
         case Node.TEXT_NODE:
-          console.log("text node", xml)
+          //console.log("text node", xml)
           return <TextNode {...nextProps}/>
         default:
           console.log("wtf? ", xml)
@@ -235,7 +238,6 @@ export default class Transformer {
     const props = Object.assign({}, standardProps)
     props.metadata = props.metadata || new TransformerMetadata()
     props.xmlDoc = doc
-    console.log("apply- props",props)
     return props.nodes.map(node => {
       const contextSwitch = new TransformerContextChain(contextSwitchLevel)
       return contextSwitch.next(Object.assign(props, {
@@ -264,6 +266,7 @@ export default class Transformer {
     for (let ctr = 0; ctr < parallelDocumentRoots.length; ctr++) {
       const documentRoot = parallelDocumentRoots.item(ctr)
       const documentUri = documentRoot.getAttribute("jf:document")
+      console.log("****documentUri=", documentUri, " when documentRoot=", documentRoot)
       const documentUriSplit = documentUri.split("/")
       const documentName = documentUriSplit[documentUriSplit.length - 1]
       if (primaryDocumentName === documentName) {
@@ -278,7 +281,7 @@ export default class Transformer {
    * @param parallelGrp {Element} A parallelGrp element
    * @return Array<Element> A list of parallelGrp elements
    */
-  static _getParallels(linkageDocument, parallelGrp) {
+  static getParallels(linkageDocument, parallelGrp) {
     const target = parallelGrp.getAttribute("target")
     const allParallelGrps = linkageDocument.getElementsByTagNameNS(JF_NS, "parallelGrp")
     let actualParallels = []
@@ -328,11 +331,9 @@ export default class Transformer {
    */
   static _mutateLinkageDocument(linkageDocument, primaryDocument, fragment) {
     const [stream, left, right] = Transformer._linkageDocumentFragment(primaryDocument, fragment)
-    if (left == null) {
-      // the stream has been selected, we need to process the whole document
-      return stream
-    }
-    else {
+    if (left != null && left !== stream)  {
+        // if left is null, we just return the stream
+        // if "left" is the stream, then we don't need to mutate - we return the stream
       // there is a range: the linkage document has to be traversed and nodes should be removed unless they are:
       // within the range *or*
       // ancestors of the left node *or*
@@ -348,7 +349,7 @@ export default class Transformer {
         if (nodeCompareStart === 0 || nodeCompareEnd === 0 ||
           ((nodeCompareStart | nodeCompareEnd) & Node.DOCUMENT_POSITION_CONTAINS) ||
           ( (nodeCompareStart & Node.DOCUMENT_POSITION_FOLLOWING) > 0 &&
-            (nodeCompareEnd & Node.DOCUMENT_POSITION_PRECEDING) < 0)
+            (nodeCompareEnd & Node.DOCUMENT_POSITION_PRECEDING) > 0)
           ) {}
         else {
           toRemove.push(thisNode)
@@ -356,9 +357,9 @@ export default class Transformer {
       }
 
       toRemove.forEach( (_) => _.remove() )
-
-      return stream
     }
+
+    return stream
   }
 
 
@@ -385,9 +386,10 @@ export default class Transformer {
     *
     * </jf:parallel-document>
     */
-    const parallelDocumentRoots = linkageDocument.getElementsByTagNameNS(TEI_NS, "TEI")
+    const clone = linkageDocument.cloneNode(true)
+    const parallelDocumentRoots = clone.getElementsByTagNameNS(TEI_NS, "TEI")
     const primaryDocument = Transformer._getPrimaryDocument(parallelDocumentRoots, document)
-    return Transformer._mutateLinkageDocument(linkageDocument, primaryDocument, fragment)
+    return Transformer._mutateLinkageDocument(clone, primaryDocument, fragment)
   }
 
 }

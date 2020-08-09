@@ -107,11 +107,11 @@ export default class DocumentApi {
    * @param documentName The document name, URL encoded
    * @param format "html" or "xml"
    * @param api default to "original"
-   * @param originalSuffix suffix to apply when api="original"; ignored in all other cases
+   * @param originalSuffix suffix to apply when api="original" or "linkage"; ignored in all other cases
    * @return A promise to the document
    */
   static async get(documentName, format="xml", api="original", originalSuffix="combined") {
-    const apiSuffix = (api === "original") ? ("/" + originalSuffix) : ""
+    const apiSuffix = (api === "original" || api === "linkage") ? ("/" + originalSuffix) : ""
     const url = new URL(`/api/data/${api}/${documentName}${apiSuffix}`, window.location.origin)
     const parseFormat = (format === "xml") ? "application/xml" : "text/html"
 

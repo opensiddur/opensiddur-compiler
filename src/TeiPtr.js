@@ -16,7 +16,7 @@ export default function TeiPtr(props) {
   const nextMetadata = metadata.set(META_INLINE_MODE, inline)
   const nextProps = Object.assign({}, props)
   nextProps.metadata = nextMetadata
-  console.log("ptr", target)
+  //console.log("ptr", target)
 
   if (type === "url") {
     // tei:ptr is an empty element, html:a is not

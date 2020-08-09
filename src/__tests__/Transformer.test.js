@@ -107,7 +107,7 @@ describe("Transformer._getPrimaryDocument", () => {
   })
 })
 
-describe("Transformer._getParallels", () => {
+describe("Transformer.getParallels", () => {
   const hasParallels = `
     <jf:parallel-document 
       xmlns:jf="http://jewishliturgy.org/ns/jlptei/flat/1.0"
@@ -160,7 +160,7 @@ describe("Transformer._getParallels", () => {
     const existingParGroup = hasParallelsXml.getElementsByTagNameNS(JF_NS, "parallelGrp").item(0)
     // just making sure this test is working right...
     expect(existingParGroup.getElementsByTagNameNS(TEI_NS, "p").item(0).getAttribute("jf:id")).toBe("d1p1")
-    const result = Transformer._getParallels(hasParallelsXml, existingParGroup)
+    const result = Transformer.getParallels(hasParallelsXml, existingParGroup)
 
     expect(result.length).toBe(1)
     expect(result[0].tagName).toBe("jf:parallelGrp")
@@ -171,7 +171,7 @@ describe("Transformer._getParallels", () => {
     const notExistingParGroup = hasParallelsXml.getElementsByTagNameNS(JF_NS, "parallelGrp").item(2)
     // just making sure this test is working right...
     expect(notExistingParGroup.getElementsByTagNameNS(TEI_NS, "p").item(0).getAttribute("jf:id")).toBe("d1p3")
-    const result = Transformer._getParallels(hasParallelsXml, notExistingParGroup)
+    const result = Transformer.getParallels(hasParallelsXml, notExistingParGroup)
 
     expect(result.length).toBe(0)
   })

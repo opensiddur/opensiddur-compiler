@@ -1,0 +1,19 @@
+.jf\:parallelGrp {
+    display: table;
+    width: 100%;
+    border-collapse: separate;
+}
+
+.parallelRow {
+    display: table-row;
+    width: auto;
+    clear: both;
+}
+
+/* TODO: this assumes 2 columns */
+.jf\:parallel {
+    float: left;
+    display: table-column;
+    width: 48%;
+    padding-right: 2%;
+}

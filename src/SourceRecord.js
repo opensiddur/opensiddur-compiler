@@ -10,7 +10,6 @@ import {CONTRIBUTOR_TYPES} from "./Transformer"
 
 export class SourceRecordUtil {
   static joinListOfReactElements(arr, joiner, ender, beginner) {
-    console.log(">>>", arr)
     const arrLast = arr.length - 1
     return arr.flatMap( (value, index) => {
       const begin = (index === 0 && beginner) ?
@@ -112,9 +111,7 @@ export default function SourceRecord(props) {
 
   const updateSource = () => {
     const fetcher = async () => {
-      console.log("*** get resource", resource)
       const sourceData = await SourceApi.get(resource)
-      console.log("***", resource, "returns", sourceData)
       setContent(sourceData)
     }
     fetcher()
