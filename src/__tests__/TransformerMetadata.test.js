@@ -24,6 +24,34 @@ describe("TransformerMetadata", () => {
   })
 })
 
+describe("TransformerMetadata.contextTEIRoot", () => {
+  const testDoc = text2xml(`<notTEI xmlns:tei="http://www.tei-c.org/ns/1.0">
+        <isNotARootNode>isn't one</isNotARootNode>
+        <containsARootNode>
+            <tei:TEI xml:id="IAMTEI">
+                <containedByARootNode/>
+            </tei:TEI>
+        </containsARootNode>
+    </notTEI>`)
+
+  it("returns the document node when the parameter is a document node", () => {
+    const result = TransformerMetadata.contextTEIRoot(testDoc)
+    expect(result).toBe(testDoc)
+  })
+
+  it("returns the ancestor document node when the parameter has no TEI ancestor", () => {
+    const notADocNode = testDoc.getElementsByTagName("isNotARootNode").item(0)
+    const result = TransformerMetadata.contextTEIRoot(notADocNode)
+    expect(result).toBe(testDoc)
+  })
+
+  it("returns the ancestor TEI element when the parameter has one", () => {
+    const notADocNode = testDoc.getElementsByTagName("containedByARootNode").item(0)
+    const result = TransformerMetadata.contextTEIRoot(notADocNode)
+    expect(result.tagName).toBe("tei:TEI")
+  })
+})
+
 describe("TransformerMetadata.contextLicense", () => {
   const CC0 = "http://creativecommons.org/publicdomain/zero/1.0"
   const doc = text2xml(`<tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0">

@@ -10,5 +10,5 @@
 export default function TextNode(props) {
   const xml = props.nodes[0]
 
-  return xml.wholeText
+  return xml.wholeText || null
 }

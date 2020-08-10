@@ -11,21 +11,25 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import "./Expandable.css"
 
+// TODO: find a way to send the data from here to the sidebar
 export default function Expandable({ icon, title, children }) {
   const [isExpanded, setExpanded] = useState(false)
 
   const toggleExpanded = () => setExpanded(!isExpanded)
 
-  return (
-    <div className="Expandable">
+  /*
       <button className={isExpanded ? "expanded" : "collapsed"} role="toggle" title={title} onClick={toggleExpanded}>
         <FontAwesomeIcon icon={icon}/>
       </button>
+      */
+
+  return null /*(
+    <div className="Expandable">
       {isExpanded &&
       <div className="ExpandableContent">
         {children}
       </div>
       }
     </div>
-  )
+  )*/
 }

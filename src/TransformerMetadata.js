@@ -31,6 +31,22 @@ export default class TransformerMetadata {
   }
 
   // functions to read context from a document
+  /** Get the effective TEI root document
+   *
+   * @param xml {Node} The node we want to get the effective TEI root of
+   * @return {Node} The effective root node, either a tei:TEI[@jf:document] or the document node
+   */
+  static contextTEIRoot(xml) {
+    if (xml.nodeType === Node.DOCUMENT_NODE || (
+      xml.nodeType === Node.ELEMENT_NODE && xml.tagName === "tei:TEI"
+    )) {
+      return xml
+    }
+    else if (xml.parentNode != null) {
+      return TransformerMetadata.contextTEIRoot(xml.parentNode)
+    }
+    else return null
+  }
 
   /** Get the license of a particular xml node
    *
@@ -38,7 +54,7 @@ export default class TransformerMetadata {
    * @return A license URI
    */
   static contextLicense(xml) {
-    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
+    const docNode = TransformerMetadata.contextTEIRoot(xml)
     const licenseNode = docNode.getElementsByTagNameNS(TEI_NS, "licence")[0]
     const licenseUri = licenseNode.getAttribute("target")
     return licenseUri
@@ -61,7 +77,7 @@ export default class TransformerMetadata {
    * @return Object A contributor structure consisting of type : [list of contributor URIs]
    */
   static contextContributors(xml) {
-    const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
+    const docNode = TransformerMetadata.contextTEIRoot(xml)
     const respStmts = docNode.getElementsByTagNameNS(TEI_NS, "respStmt")
     const changes = docNode.getElementsByTagNameNS(TEI_NS, "change")
 
@@ -95,8 +111,9 @@ export default class TransformerMetadata {
    * @return Array[Object] list of source relative URIs and the relevant scope, or null if no sources found
    */
   static contextSources(xml) {
+    const rootNode = TransformerMetadata.contextTEIRoot(xml)
     const docNode = (xml.nodeType === Node.DOCUMENT_NODE) ? xml : xml.ownerDocument
-    const sourceIterator = docNode.evaluate("//tei:sourceDesc/tei:bibl", docNode,
+    const sourceIterator = docNode.evaluate("descendant::tei:sourceDesc/tei:bibl", rootNode,
       nsResolver, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null)
     let sources = []
     for (let i = 0; i < sourceIterator.snapshotLength; i++) {

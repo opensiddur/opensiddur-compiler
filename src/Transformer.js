@@ -159,9 +159,20 @@ export class ParsedPtr {
  *  transformerRecursionFunction - the function to call when starting processing a new document
  */
 export default class Transformer {
-  static traverseChildren(xml, props, level=ELEMENT_CONTEXT_SWITCH) {
+  /** Filter xml nodes from child traversal
+   *
+   * @param xml {Node}
+   * @return {boolean} true if node should be traversed
+   */
+  // TODO: test the traversal filter in traverseChildren
+  static traversalFilter(xml) {
+    return true
+  }
+
+  static traverseChildren(xml, props, level=ELEMENT_CONTEXT_SWITCH,
+                          traversalFilter=Transformer.traversalFilter) {
     if (xml.hasChildNodes()) {
-      return Transformer.applyTo(Array.from(xml.childNodes), props, level)
+      return Transformer.applyTo(Array.from(xml.childNodes).filter(traversalFilter), props, level)
     }
     else return null
   }
