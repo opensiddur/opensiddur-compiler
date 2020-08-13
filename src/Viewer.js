@@ -9,7 +9,7 @@ import React from "react"
 import {useParams} from "react-router"
 import ViewTransformer from "./ViewTransformer"
 import TransformerMetadata from "./TransformerMetadata"
-import ContributorMetadataContext from "./ContributorMetadataContext"
+import {ContributorMetadataContext} from "./ContributorMetadataContext"
 import MetadataViewer from "./MetadataViewer"
 
 export default function Viewer() {

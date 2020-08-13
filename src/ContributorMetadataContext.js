@@ -18,34 +18,41 @@ export const GlobalContributorContext = React.createContext({})
 export const ActiveContributorContext = React.createContext({})
 export const CurrentContributorContext = React.createContext({})
 
-export default function ContributorMetadataContext(props) {
+const contributorReducer = (oldContributorList, newContributorList) => {
+  let contributorsByType = {}
+  for (const contribType of Object.keys(CONTRIBUTOR_TYPES)) {
+    contributorsByType[contribType] = new Set([
+      ...(oldContributorList[contribType] || new Set()),
+      ...(newContributorList[contribType] || new Set())
+    ])
+  }
+  return contributorsByType
+}
 
-  const [globalContributorState, registerGlobalContributorState] = useReducer( (oldContributorList, newContributorList) => {
-    let contributorsByType = {}
-    for (const contribType of Object.keys(CONTRIBUTOR_TYPES)) {
-      contributorsByType[contribType] = new Set([
-        ...(oldContributorList[contribType] || new Set()),
-        ...(newContributorList[contribType] || new Set())
-      ])
-    }
-    return contributorsByType
-  }, {})
+const activationReducer = (acs, newContributorList) => {
+  return newContributorList
+}
 
-  const globalContributorContextValue = useMemo(() => {
-    return { globalContributorState, registerGlobalContributorState }
-  }, [globalContributorState, registerGlobalContributorState])
+export const ContributorMetadataContext = (props) =>
+  GenericMetadataContext(props, GlobalContributorContext, ActiveContributorContext, contributorReducer, activationReducer)
 
-  const [activeContributorState, activateContributorState] = useReducer( (acs, newContributorList) => {
-    return newContributorList
-  }, {})
+export function GenericMetadataContext(props, globalContext, activationContext, globalStateReducer, activationReducer) {
 
-  const activeContributorContextValue = useMemo(() => {
-    return { activeContributorState, activateContributorState };
-  }, [activeContributorState, activateContributorState]);
+  const [globalState, registerGlobalState] = useReducer(globalStateReducer, {})
 
-  return <GlobalContributorContext.Provider value={globalContributorContextValue}>
-    <ActiveContributorContext.Provider value={activeContributorContextValue}>
+  const globalContextValue = useMemo(() => {
+    return { globalState, registerGlobalState }
+  }, [globalState, registerGlobalState])
+
+  const [activeState, activateState] = useReducer( activationReducer, {})
+
+  const activeContextValue = useMemo(() => {
+    return { activeState, activateState };
+  }, [activeState, activateState]);
+
+  return <globalContext.Provider value={globalContextValue}>
+    <activationContext.Provider value={activeContextValue}>
       {props.children}
-    </ActiveContributorContext.Provider>
-  </GlobalContributorContext.Provider>
+    </activationContext.Provider>
+  </globalContext.Provider>
 }

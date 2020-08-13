@@ -11,11 +11,11 @@ export default function TextNode(props) {
   const xml = props.nodes[0]
   const content = xml.wholeText || null
 
-  const {_, activateContributorState} = useContext(ActiveContributorContext)
+  const activeContributorContext = useContext(ActiveContributorContext)
   const currentContributorContext = useContext(CurrentContributorContext)
 
   const activate = () => {
-    activateContributorState(currentContributorContext)
+    activeContributorContext.activateState(currentContributorContext)
   }
 
   if (content) {

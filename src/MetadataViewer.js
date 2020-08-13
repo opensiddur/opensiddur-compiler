@@ -9,14 +9,14 @@ import {ActiveContributorContext} from "./ContributorMetadataContext"
 import ContributorList from "./ContributorList"
 
 export default function MetadataViewer() {
-  const { activeContributorState, activateContributorState} = useContext(ActiveContributorContext)
+  const contributorContext = useContext(ActiveContributorContext)
 
   const deactivate = () => {
-    activateContributorState({})
+    contributorContext.activateState({})
   }
 
   return <div className="MetadataViewer">
     <button onClick={deactivate}>Close</button>
-    <ContributorList contributors={activeContributorState}/>
+    <ContributorList contributors={contributorContext.activeState}/>
   </div>
 }

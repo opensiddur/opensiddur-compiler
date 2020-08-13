@@ -13,11 +13,11 @@ export default function UpdateContributors(props) {
   const newContributors = full && TransformerMetadata.contextContributors(props.nodes[0])
   const needsChange = !!(full && newContributors)
 
-  const { _, registerGlobalContributorState } = useContext(GlobalContributorContext)
+  const globalContributorContext = useContext(GlobalContributorContext)
 
   useEffect( () => {
     newContributors && console.log("update:", newContributors)
-    newContributors && registerGlobalContributorState(newContributors)
+    newContributors && globalContributorContext.registerGlobalState(newContributors)
   }, [needsChange])
 
   if (needsChange) {
