@@ -207,7 +207,7 @@ export default function UpdateConditionals(props) {
   const [conditionalEvaluation, setConditionalEvaluation] = useState(CONDITIONAL_YES)
   const settings = props.metadata.get(META_SETTINGS)
 
-  const fetchConditions = () => {
+  useEffect(() => {
     const getConditionsFrom = async (uri) => {
       const conditionsXml = await DocumentApi.getUri(uri, props.documentName, props.documentApi)
       return parseSettings(conditionsXml)
@@ -221,14 +221,11 @@ export default function UpdateConditionals(props) {
     if (hasUpdates) {
       getAllConditions()
     }
-  }
+  }, [props.metadata, props.documentName, props.documentApi, hasUpdates])
 
-  const evaluations = () => {
+  useEffect(() => {
     setConditionalEvaluation(evaluate(conditions, settings))
-  }
-
-  useEffect(() => fetchConditions(), [props.metadata])
-  useEffect(() => evaluations(), [conditions])
+  }, [conditions, settings])
 
   if (hasUpdates) {
     return (<div className={`UpdateConditionals ${conditionalClass[conditionalEvaluation]}`}>

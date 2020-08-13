@@ -5,25 +5,27 @@
  */
 import TransformerMetadata from "./TransformerMetadata"
 import {DOCUMENT_CONTEXT_SWITCH, META_CONTRIBUTORS} from "./Transformer"
-import ContributorList from "./ContributorList"
-import React from "react"
-import Expandable from "./Expandable"
-import {faUserEdit} from "@fortawesome/free-solid-svg-icons"
+import React, {useContext, useEffect} from "react"
+import {GlobalContributorContext, CurrentContributorContext} from "./ContributorMetadataContext"
 
 export default function UpdateContributors(props) {
   const full = props.chain.level >= DOCUMENT_CONTEXT_SWITCH
   const newContributors = full && TransformerMetadata.contextContributors(props.nodes[0])
-  const needsChange = full && newContributors
+  const needsChange = !!(full && newContributors)
+
+  const { _, registerGlobalContributorState } = useContext(GlobalContributorContext)
+
+  useEffect( () => {
+    newContributors && console.log("update:", newContributors)
+    newContributors && registerGlobalContributorState(newContributors)
+  }, [needsChange])
 
   if (needsChange) {
     const nextMetadata = props.metadata.set(META_CONTRIBUTORS, newContributors)
-
     return (<div className="UpdateContributors">
-      <Expandable title="Contributor list" icon={faUserEdit}>
-        <ContributorList contributors={newContributors} />
-      </Expandable>
-      {props.chain.nextWithMetadataUpdate(props, nextMetadata)}
-    </div>)
+      <CurrentContributorContext.Provider value={newContributors}>{
+        props.chain.next(props)
+      }</CurrentContributorContext.Provider></div>)
   }
   else {
     return props.chain.next(props)

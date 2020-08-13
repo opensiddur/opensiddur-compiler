@@ -9,18 +9,23 @@ import React from "react"
 import {useParams} from "react-router"
 import ViewTransformer from "./ViewTransformer"
 import TransformerMetadata from "./TransformerMetadata"
+import ContributorMetadataContext from "./ContributorMetadataContext"
+import MetadataViewer from "./MetadataViewer"
 
 export default function Viewer() {
   const {document} = useParams()
   const metadata = new TransformerMetadata()
-
   // just a placeholder
   return ( <div className="Viewer">
-    <h1>{document}</h1>
-    <div className="LeftSidebar" />
-    <div className="Content">
-      <ViewTransformer document={document} metadata={metadata}/>
-    </div>
-    <div className="RightSidebar" />
+    <ContributorMetadataContext>
+      <h1>{document}</h1>
+      <div className="LeftSidebar" />
+      <div className="Content">
+        <ViewTransformer document={document} metadata={metadata}/>
+      </div>
+      <div className="RightSidebar" >
+        <MetadataViewer/>
+      </div>
+    </ContributorMetadataContext>
   </div>)
 }

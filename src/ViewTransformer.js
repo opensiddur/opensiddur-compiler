@@ -50,13 +50,13 @@ export default function ViewTransformer(props) {
 
   const originalSuffix = metadata.get(META_INLINE_MODE) === true ? "flat" : "combined"
 
-  const [content, setContent] = useState(<div>Loading...</div>)
+  const [content, setContent] = useState()
 
   const transformerRecursionFunction = (document, fragment, metadata, apiName=api) => {
     return <ViewTransformer document={document} fragment={fragment} metadata={metadata} api={apiName}/>
   }
 
-  const updateDocument = () => {
+  useEffect(() => {
     const fetcher = async () => {
       const hasTranslationRedirect = await ViewTransformerUtils.translationRedirect(document, api, metadata)
       const redirectedContent = async () => {
@@ -72,20 +72,21 @@ export default function ViewTransformer(props) {
         return fragment ? DocumentApi.getFragment(docContent, fragment) : [docContent]
       }
 
-      const transformed = Transformer.apply({
-        documentName: document,
-        documentApi: api,
-        nodes: await (hasTranslationRedirect ? redirectedContent() : unredirectedContent()),
-        transformerRecursionFunction: transformerRecursionFunction,
-        metadata: props.metadata
-      })
+      const rawContent = await (hasTranslationRedirect ? redirectedContent() : unredirectedContent())
 
-      setContent(transformed)
+      setContent(rawContent)
     }
     fetcher()
-  }
+  }, [document, api, fragment, metadata, originalSuffix])
 
-  useEffect(() => updateDocument(), [document, fragment, metadata])
+  const transformed = content ?
+    Transformer.apply({
+      documentName: document,
+      documentApi: api,
+      nodes: content,
+      transformerRecursionFunction: transformerRecursionFunction,
+      metadata: props.metadata
+    }) : <div>Loading...</div>
 
-  return <div className="ViewTransformer">{content}</div>
+  return <div className="ViewTransformer">{transformed}</div>
 }

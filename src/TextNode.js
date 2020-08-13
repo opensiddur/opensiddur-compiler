@@ -3,12 +3,23 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-/**
- * @return {string}
- */
+import React from "react"
+import {ActiveContributorContext, CurrentContributorContext} from "./ContributorMetadataContext"
+import {useContext} from "react"
 
 export default function TextNode(props) {
   const xml = props.nodes[0]
+  const content = xml.wholeText || null
 
-  return xml.wholeText || null
+  const {_, activateContributorState} = useContext(ActiveContributorContext)
+  const currentContributorContext = useContext(CurrentContributorContext)
+
+  const activate = () => {
+    activateContributorState(currentContributorContext)
+  }
+
+  if (content) {
+    return <span onClick={activate}>{content}</span>
+  }
+  else return null
 }

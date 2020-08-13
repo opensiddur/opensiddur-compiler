@@ -107,17 +107,15 @@ export function SourceRecordPart(props) {
  */
 export default function SourceRecord(props) {
   const resource = props.source.resource
-  const [content, setContent] = useState("Loading " + resource + "...")
+  const [content, setContent] = useState({})
 
-  const updateSource = () => {
+  useEffect(() => () => {
     const fetcher = async () => {
       const sourceData = await SourceApi.get(resource)
       setContent(sourceData)
     }
     fetcher()
-  }
-
-  useEffect(() => updateSource(), [resource])
+  }, [resource])
 
   return (<div className="SourceRecord" key={resource} lang={content.lang}>
     { (content.analytic) && ([<SourceRecordPart part={content.analytic} type="analytic"/>, <i>in</i>])}
