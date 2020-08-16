@@ -3,8 +3,9 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React, {useMemo, useReducer} from "react"
+import React from "react"
 import {CONTRIBUTOR_TYPES} from "./Transformer"
+import GenericMetadataContext from "./GenericMetadataContext"
 
 /* Contributors has 3 types of context:
  * Global context, supporting a global bibliography (r/w)
@@ -29,30 +30,5 @@ const contributorReducer = (oldContributorList, newContributorList) => {
   return contributorsByType
 }
 
-const activationReducer = (acs, newContributorList) => {
-  return newContributorList
-}
-
 export const ContributorMetadataContext = (props) =>
-  GenericMetadataContext(props, GlobalContributorContext, ActiveContributorContext, contributorReducer, activationReducer)
-
-export function GenericMetadataContext(props, globalContext, activationContext, globalStateReducer, activationReducer) {
-
-  const [globalState, registerGlobalState] = useReducer(globalStateReducer, {})
-
-  const globalContextValue = useMemo(() => {
-    return { globalState, registerGlobalState }
-  }, [globalState, registerGlobalState])
-
-  const [activeState, activateState] = useReducer( activationReducer, {})
-
-  const activeContextValue = useMemo(() => {
-    return { activeState, activateState };
-  }, [activeState, activateState]);
-
-  return <globalContext.Provider value={globalContextValue}>
-    <activationContext.Provider value={activeContextValue}>
-      {props.children}
-    </activationContext.Provider>
-  </globalContext.Provider>
-}
+  GenericMetadataContext(props, GlobalContributorContext, ActiveContributorContext, contributorReducer)

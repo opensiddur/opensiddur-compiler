@@ -40,7 +40,6 @@ export class License {
  * @constructor
  */
 export default function SmallLicenseBox(props) {
-  //console.log("***props =", props)
   const licenseName = new License().urlToName(props.license)
 
   return (<div className="LicenseBox">License: <a href={props.license}>{licenseName}</a></div>)

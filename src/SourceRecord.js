@@ -109,7 +109,7 @@ export default function SourceRecord(props) {
   const resource = props.source.resource
   const [content, setContent] = useState({})
 
-  useEffect(() => () => {
+  useEffect(() => {
     const fetcher = async () => {
       const sourceData = await SourceApi.get(resource)
       setContent(sourceData)

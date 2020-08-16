@@ -11,6 +11,8 @@ import ViewTransformer from "./ViewTransformer"
 import TransformerMetadata from "./TransformerMetadata"
 import {ContributorMetadataContext} from "./ContributorMetadataContext"
 import MetadataViewer from "./MetadataViewer"
+import {LicenseMetadataContext} from "./LicenseMetadataContext"
+import {SourcesMetadataContext} from "./SourcesMetadataContext"
 
 export default function Viewer() {
   const {document} = useParams()
@@ -18,14 +20,18 @@ export default function Viewer() {
   // just a placeholder
   return ( <div className="Viewer">
     <ContributorMetadataContext>
-      <h1>{document}</h1>
-      <div className="LeftSidebar" />
-      <div className="Content">
-        <ViewTransformer document={document} metadata={metadata}/>
-      </div>
-      <div className="RightSidebar" >
-        <MetadataViewer/>
-      </div>
+      <LicenseMetadataContext>
+        <SourcesMetadataContext>
+          <h1>{document}</h1>
+          <div className="LeftSidebar" />
+          <div className="Content">
+            <ViewTransformer document={document} metadata={metadata}/>
+          </div>
+          <div className="RightSidebar" >
+            <MetadataViewer/>
+          </div>
+        </SourcesMetadataContext>
+      </LicenseMetadataContext>
     </ContributorMetadataContext>
   </div>)
 }

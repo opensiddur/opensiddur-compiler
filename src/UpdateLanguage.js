@@ -3,9 +3,10 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React from "react"
+import React, {useContext} from "react"
 import TransformerMetadata from "./TransformerMetadata"
-import {LOCATION_CONTEXT_SWITCH, META_LANG} from "./Transformer"
+import {LOCATION_CONTEXT_SWITCH} from "./Transformer"
+import {CurrentLanguageContext} from "./LanguageMetadataContext"
 
 
 /** standard props are:
@@ -14,15 +15,19 @@ import {LOCATION_CONTEXT_SWITCH, META_LANG} from "./Transformer"
  * @constructor
  */
 export default function UpdateLanguage(props) {
+  const languageContext = useContext(CurrentLanguageContext)
   const xml = props.nodes[0]
-  const oldLang = props.metadata.get(META_LANG)
+  const oldLang = languageContext
   const newLang = (props.chain.level >= LOCATION_CONTEXT_SWITCH) ? TransformerMetadata.contextLanguage(xml) :
     (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("xml:lang") && xml.getAttribute("xml:lang"))
-  const needsChange = (newLang && (!oldLang || oldLang !== newLang))
+  const needsChange = !!(newLang && (!oldLang || oldLang !== newLang))
 
   if (needsChange) {
-    const nextMetadata = props.metadata.set(META_LANG, newLang)
-    return <div className="UpdateLanguage" lang={newLang}>{props.chain.nextWithMetadataUpdate(props, nextMetadata)}</div>
+    return <div className="UpdateLanguage" lang={newLang}>
+      <CurrentLanguageContext.Provider value={newLang}>
+        {props.chain.next(props)}
+      </CurrentLanguageContext.Provider>
+    </div>
   }
   else {
     return props.chain.next(props)

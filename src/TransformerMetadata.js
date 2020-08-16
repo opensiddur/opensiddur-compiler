@@ -107,8 +107,8 @@ export default class TransformerMetadata {
 
   /** Get a list of source URIs that are applicable to a given document
    *
-   * @param xml Node A node within the document
-   * @return Array[Object] list of source relative URIs and the relevant scope, or null if no sources found
+   * @param xml {Node} A node within the document
+   * @return {Array<ContextSourceInfo>} list of source relative URIs and the relevant scope, or null if no sources found
    */
   static contextSources(xml) {
     const rootNode = TransformerMetadata.contextTEIRoot(xml)

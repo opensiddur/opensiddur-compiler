@@ -24,6 +24,8 @@ import JfParallelGrp from "./JfParallelGrp"
 
 // TODO:
 // test transform()
+// move settings to context
+// conditional evaluation on context
 // add tracking of text direction on new document?
 // add tracking of text direction on new element?
 // add license metadata to a global list
@@ -36,11 +38,7 @@ import JfParallelGrp from "./JfParallelGrp"
 // add styling
 
 export const META_INLINE_MODE = "inline"
-export const META_LANG = "lang"
-export const META_LICENSE = "license"
-export const META_CONTRIBUTORS = "contributors"
 export const META_SETTINGS = "settings"
-export const META_SOURCES = "sources"
 
 // all system-wide settings are stored here...
 export const SETTINGS_OPENSIDDUR = "opensiddur"

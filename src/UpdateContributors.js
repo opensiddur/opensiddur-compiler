@@ -4,7 +4,7 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import TransformerMetadata from "./TransformerMetadata"
-import {DOCUMENT_CONTEXT_SWITCH, META_CONTRIBUTORS} from "./Transformer"
+import {DOCUMENT_CONTEXT_SWITCH} from "./Transformer"
 import React, {useContext, useEffect} from "react"
 import {GlobalContributorContext, CurrentContributorContext} from "./ContributorMetadataContext"
 
@@ -16,12 +16,10 @@ export default function UpdateContributors(props) {
   const globalContributorContext = useContext(GlobalContributorContext)
 
   useEffect( () => {
-    newContributors && console.log("update:", newContributors)
     newContributors && globalContributorContext.registerGlobalState(newContributors)
   }, [needsChange])
 
   if (needsChange) {
-    const nextMetadata = props.metadata.set(META_CONTRIBUTORS, newContributors)
     return (<div className="UpdateContributors">
       <CurrentContributorContext.Provider value={newContributors}>{
         props.chain.next(props)
