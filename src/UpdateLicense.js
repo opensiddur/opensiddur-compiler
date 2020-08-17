@@ -22,10 +22,10 @@ export default function UpdateLicense(props) {
   const full = level >= DOCUMENT_CONTEXT_SWITCH
   const oldLicense = full && currentLicenseContext
   const newLicense = full && TransformerMetadata.contextLicense(props.nodes[0])
-  const needsChange = full && (newLicense && (!oldLicense || oldLicense !== newLicense))
+  const needsChange = !!(full && (newLicense && (!oldLicense || oldLicense !== newLicense)))
 
   useEffect( () => {
-    newLicense && globalLicenseContext.registerGlobalState(newLicense)
+    needsChange && newLicense && globalLicenseContext.registerGlobalState(newLicense)
   }, [needsChange])
 
   if (needsChange) {
@@ -37,6 +37,6 @@ export default function UpdateLicense(props) {
     </div>
   }
   else {
-    return props.chain.next(props)
+     return props.chain.next(props)
   }
 }

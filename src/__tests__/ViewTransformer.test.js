@@ -102,7 +102,7 @@ describe("ViewTransformer component", () => {
 
     mockUtilsTranslationRedirect.mockResolvedValue(redirectApi)
     mockDocGet.mockResolvedValue(docContentXml)
-    mockRedirectFragment.mockResolvedValue(transContentXml)
+    mockRedirectFragment.mockReturnValueOnce(transContentXml)
     mockApply.mockReturnValueOnce(transformedDocument)
 
 
@@ -118,8 +118,8 @@ describe("ViewTransformer component", () => {
 
     await wait()
     expect(mockApply).toHaveBeenCalledTimes(1)
-    expect(mockApply.mock.calls[0][0].nodes).toMatchObject(transContentXml)
-    await wait()
+    expect(mockApply.mock.calls[0][0].nodes[0]).toMatchObject(transContentXml)
+
     expect(getByText("Transformed")).toBeInTheDocument()
   })
 

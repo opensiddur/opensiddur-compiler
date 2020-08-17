@@ -9,14 +9,13 @@ import {nsResolver, ParsedPtr} from "./Transformer"
 /** Determine if the given XML is a part, and, if so, if it is the first part
  * @param xml {Node}
  */
-// TODO: test this!
 export function isFirstPart(xml) {
   if (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("jf:part")) {
     const partId = xml.getAttribute("jf:part")
     return (!xml.ownerDocument.evaluate(`preceding::*[@jf:part='${partId}']`,
       xml, nsResolver, XPathResult.BOOLEAN_TYPE, null).booleanValue)
   }
-  else return false
+  else return true
 }
 
 /** Annotation:

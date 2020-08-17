@@ -78,7 +78,7 @@ export default function ViewTransformer(props) {
     }
     fetcher()
   }, [document, api, fragment, metadata, originalSuffix])
-
+  
   const transformed = content ?
     Transformer.apply({
       documentName: document,

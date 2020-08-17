@@ -5,12 +5,12 @@
  */
 
 import React, {useContext} from "react"
-import {ActiveContributorContext} from "./ContributorMetadataContext"
+import {ActiveContributorContext, GlobalContributorContext} from "./ContributorMetadataContext"
 import ContributorList from "./ContributorList"
 import SourceList from "./SourceList"
-import {ActiveLicenseContext} from "./LicenseMetadataContext"
-import SmallLicenseBox from "./SmallLicenseBox"
-import {ActiveSourcesContext} from "./SourcesMetadataContext"
+import {ActiveLicenseContext, GlobalLicenseContext} from "./LicenseMetadataContext"
+import SmallLicenseBox, {LicenseList} from "./SmallLicenseBox"
+import {ActiveSourcesContext, GlobalSourcesContext} from "./SourcesMetadataContext"
 
 export default function MetadataViewer() {
   const contributorContext = useContext(ActiveContributorContext)
@@ -28,5 +28,18 @@ export default function MetadataViewer() {
     { licenseContext.activeState && <SmallLicenseBox license={licenseContext.activeState}/>}
     { sourceContext.activeState && <SourceList sources={sourceContext.activeState}/>}
     <ContributorList contributors={contributorContext.activeState}/>
+  </div>
+}
+
+
+export function GlobalMetadataViewer() {
+  const contributorContext = useContext(GlobalContributorContext)
+  const licenseContext = useContext(GlobalLicenseContext)
+  const sourceContext = useContext(GlobalSourcesContext)
+
+  return <div className="GlobalMetadataViewer">
+    <LicenseList licenses={licenseContext.globalState}/>
+    <SourceList sources={sourceContext.globalState}/>
+    <ContributorList contributors={contributorContext.globalState}/>
   </div>
 }

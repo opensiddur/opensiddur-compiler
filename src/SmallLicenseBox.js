@@ -44,3 +44,19 @@ export default function SmallLicenseBox(props) {
 
   return (<div className="LicenseBox">License: <a href={props.license}>{licenseName}</a></div>)
 }
+
+export function LicenseList({licenses}) {
+  const lic = new License()
+  const licenseNames = Array.from(licenses).map ( (L) => { return {url: L, name: lic.urlToName(L) } })
+
+  return (<div className="LicenseList">
+    { licenseNames.length > 0 && <h2>{licenseNames.length === 1 ? "License" : "Licenses"}</h2>}
+    <ul>
+    { licenseNames.map ( ({url, name}) => {
+        return <li key={url}><a href={url}>{name}</a></li>
+      }
+      )
+    }
+    </ul>
+  </div> )
+}
