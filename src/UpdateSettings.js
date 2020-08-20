@@ -42,8 +42,8 @@ function extractFeatureValue(xml) {
       case "tei:numeric":
         return txt
       case "tei:vColl":
-        return Array.from(xml.childNodes).
-          filter( node => node.nodeType === Node.ELEMENT_NODE).map(_ => extractFeatureValue(_))
+        return Array.from(xml.childNodes)
+          .filter( node => node.nodeType === Node.ELEMENT_NODE).map(_ => extractFeatureValue(_))
       case "tei:fs":
         return settingsStructureFromXml([xml])[0]
       case "tei:default":
@@ -124,7 +124,7 @@ export default function UpdateSettings(props) {
   const [nextMetadata, setNextMetadata] = useState(props.metadata)
   const hasUpdates = (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("jf:set"))
 
-  const fetchAll = () => {
+  useEffect(() => {
     if (hasUpdates) {
       const currentSettings = props.metadata.get(META_SETTINGS) || {}
 
@@ -142,8 +142,7 @@ export default function UpdateSettings(props) {
 
       getAllNewSettings()
     }
-  }
-  useEffect(() => fetchAll(), [props.metadata])
+  }, [props.metadata, props.documentName, props.documentApi, hasUpdates, xml])
 
   if (hasUpdates) {
     return (<div className="UpdateSettings">

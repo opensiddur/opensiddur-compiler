@@ -9,7 +9,7 @@ import '@testing-library/jest-dom/extend-expect'
 
 import TransformerMetadata from "../TransformerMetadata"
 import {text2xml} from "../TestUtils"
-import Annotate from "../Annotate"
+import Annotate, {isFirstPart} from "../Annotate"
 
 describe("Annotate", () => {
   const mockChainNext = jest.fn()
@@ -68,5 +68,42 @@ describe("Annotate", () => {
 
     expect(recursionFunction).toHaveBeenCalledTimes(0)
     expect(mockChainNext).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("isFirstPart", () => {
+  const xmlNodes = text2xml(`<root xmlns:jf="http://jewishliturgy.org/ns/jlptei/flat/1.0">
+        <noPart>No part!</noPart>
+        <differentPart jf:part="diff">diff</differentPart>
+        <firstPart jf:part="partOf">first</firstPart>
+        <hierarchy>
+            <anotherDifferentPart jf:part="diff2">diffy</anotherDifferentPart>
+            <secondPart jf:part="partOf">second</secondPart>
+        </hierarchy>
+        
+   </root>`)
+
+  it("returns true when an element node has jf:part and no preceding elements with the same partid", () => {
+    const yesItIs = xmlNodes.getElementsByTagNameNS("", "firstPart").item(0)
+    const result = isFirstPart(yesItIs)
+    expect(result).toBe(true)
+  })
+
+  it("returns false when an element node has jf:part and has preceding elements with the same partid", () => {
+    const noItIsnt = xmlNodes.getElementsByTagNameNS("", "secondPart").item(0)
+    const result = isFirstPart(noItIsnt)
+    expect(result).toBe(false)
+  })
+
+  it("returns true when the node does not have @jf:part", () => {
+    const noPart = xmlNodes.getElementsByTagNameNS("", "noPart").item(0)
+    const result = isFirstPart(noPart)
+    expect(result).toBe(true)
+  })
+
+  it("returns false when the node is not an element node", () => {
+    const notAnElement = xmlNodes.getElementsByTagNameNS("", "firstPart").item(0).childNodes.item(0)
+    const result = isFirstPart(notAnElement)
+    expect(result).toBe(true)
   })
 })

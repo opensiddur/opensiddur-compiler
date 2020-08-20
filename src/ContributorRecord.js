@@ -14,16 +14,13 @@ export default function ContributorRecord(props) {
   const userName = props.user
   const [content, setContent] = useState(new UserInfo(userName, userName, null))
 
-  const updateContributor = () => {
+  useEffect( () => {
     const fetcher = async () => {
       const userInfo = await UserApi.get(userName)
-
       setContent(userInfo)
     }
     fetcher()
-  }
-
-  useEffect(() => updateContributor(), [userName])
+  }, [userName])
 
   const recordData = (content.name && content.org) ?
     content.name + ", " + content.org :

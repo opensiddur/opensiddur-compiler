@@ -10,7 +10,6 @@ import {CONTRIBUTOR_TYPES} from "./Transformer"
 
 export class SourceRecordUtil {
   static joinListOfReactElements(arr, joiner, ender, beginner) {
-    console.log(">>>", arr)
     const arrLast = arr.length - 1
     return arr.flatMap( (value, index) => {
       const begin = (index === 0 && beginner) ?
@@ -108,19 +107,15 @@ export function SourceRecordPart(props) {
  */
 export default function SourceRecord(props) {
   const resource = props.source.resource
-  const [content, setContent] = useState("Loading " + resource + "...")
+  const [content, setContent] = useState({})
 
-  const updateSource = () => {
+  useEffect(() => {
     const fetcher = async () => {
-      console.log("*** get resource", resource)
       const sourceData = await SourceApi.get(resource)
-      console.log("***", resource, "returns", sourceData)
       setContent(sourceData)
     }
     fetcher()
-  }
-
-  useEffect(() => updateSource(), [resource])
+  }, [resource])
 
   return (<div className="SourceRecord" key={resource} lang={content.lang}>
     { (content.analytic) && ([<SourceRecordPart part={content.analytic} type="analytic"/>, <i>in</i>])}

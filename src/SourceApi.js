@@ -5,7 +5,7 @@
  */
 
 import BaseApi, {ApiError} from "./BaseApi"
-import {TEI_NS} from "./Transformer"
+import {nsResolver, TEI_NS} from "./Transformer"
 import TransformerMetadata from "./TransformerMetadata"
 
 export class SourceReader {
@@ -95,7 +95,6 @@ export class Source {
    */
   constructor(markup) {
     const docElement = markup.ownerDocument == null ? markup.documentElement : markup.ownerDocument.documentElement
-    const nsResolver = markup.createNSResolver(docElement)
 
     const defaultLang = docElement.getAttribute("xml:lang")
 

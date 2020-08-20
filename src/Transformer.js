@@ -19,9 +19,13 @@ import Annotate from "./Annotate"
 import TransformerMetadata from "./TransformerMetadata"
 import TeiAnchor from "./TeiAnchor"
 import UpdateConditionals from "./UpdateConditionals"
+import DocumentApi from "./DocumentApi"
+import JfParallelGrp from "./JfParallelGrp"
 
 // TODO:
 // test transform()
+// move settings to context
+// conditional evaluation on context
 // add tracking of text direction on new document?
 // add tracking of text direction on new element?
 // add license metadata to a global list
@@ -31,16 +35,15 @@ import UpdateConditionals from "./UpdateConditionals"
 // display license, contributor, source lists at the end of the document [not in this class]
 // add support for tracking settings via jf:set and metadata to a global list
 // add support for live conditional evaluation
-// add support for notes (external)
-// add support for instructions
 // add styling
 
 export const META_INLINE_MODE = "inline"
-export const META_LANG = "lang"
-export const META_LICENSE = "license"
-export const META_CONTRIBUTORS = "contributors"
 export const META_SETTINGS = "settings"
-export const META_SOURCES = "sources"
+
+// all system-wide settings are stored here...
+export const SETTINGS_OPENSIDDUR = "opensiddur"
+// including the selected translations
+export const SETTINGS_TRANSLATION = "translation"
 
 /** indicates a context switch of an element in document order */
 export const ELEMENT_CONTEXT_SWITCH = 0
@@ -59,6 +62,10 @@ export const NAMESPACES = {
   "j": J_NS,
   "jf": JF_NS,
   "xml": XML_NS
+}
+
+export function nsResolver(ns) {
+  return NAMESPACES[ns] || null
 }
 
 export const CONTRIBUTOR_TYPES = {
@@ -150,10 +157,20 @@ export class ParsedPtr {
  *  transformerRecursionFunction - the function to call when starting processing a new document
  */
 export default class Transformer {
-  static traverseChildren(xml, props) {
-    console.log("traverseChildren: ", xml.hasChildNodes(), Array.from(xml.childNodes))
+  /** Filter xml nodes from child traversal
+   *
+   * @param xml {Node}
+   * @return {boolean} true if node should be traversed
+   */
+  // TODO: test the traversal filter in traverseChildren
+  static traversalFilter(xml) {
+    return true
+  }
+
+  static traverseChildren(xml, props, level=ELEMENT_CONTEXT_SWITCH,
+                          traversalFilter=Transformer.traversalFilter) {
     if (xml.hasChildNodes()) {
-      return Transformer.applyTo(Array.from(xml.childNodes), props, ELEMENT_CONTEXT_SWITCH)
+      return Transformer.applyTo(Array.from(xml.childNodes).filter(traversalFilter), props, level)
     }
     else return null
   }
@@ -174,6 +191,8 @@ export default class Transformer {
         case "j:settings":
         case "jf:concurrent":
           return null
+        case "jf:parallelGrp":
+          return <JfParallelGrp {...standardProps}/>
         case "tei:anchor":
           return <TeiAnchor {...standardProps}/>
         case "tei:teiHeader":
@@ -192,7 +211,6 @@ export default class Transformer {
    * @returns {string|Array|[]|*|[]|undefined}
    */
   static transform(standardProps) {
-    console.log("***transform", standardProps)
     const xmlList = standardProps.nodes
     return xmlList.map( (xml) => {
       // set the next context node
@@ -208,7 +226,7 @@ export default class Transformer {
         case Node.ELEMENT_NODE:
           return Transformer.transformElement(nextProps)
         case Node.TEXT_NODE:
-          console.log("text node", xml)
+          //console.log("text node", xml)
           return <TextNode {...nextProps}/>
         default:
           console.log("wtf? ", xml)
@@ -229,7 +247,6 @@ export default class Transformer {
     const props = Object.assign({}, standardProps)
     props.metadata = props.metadata || new TransformerMetadata()
     props.xmlDoc = doc
-    console.log("apply- props",props)
     return props.nodes.map(node => {
       const contextSwitch = new TransformerContextChain(contextSwitchLevel)
       return contextSwitch.next(Object.assign(props, {
@@ -243,6 +260,145 @@ export default class Transformer {
     const props = Object.assign({}, standardProps)
     props.nodes = xmlList
     return Transformer.apply(props, contextSwitchLevel)
+  }
+
+  // helper functions for redirectFragment. Used for testing, but not part of the public interface
+  // of the class
+  /** get the node representing the primary document in a linkage document
+   *
+   * @param parallelDocumentRoots {HTMLCollection}
+   * @param primaryDocumentName {string}
+   * @return {Element}
+   * @private
+   */
+  static _getPrimaryDocument(parallelDocumentRoots, primaryDocumentName)  {
+    for (let ctr = 0; ctr < parallelDocumentRoots.length; ctr++) {
+      const documentRoot = parallelDocumentRoots.item(ctr)
+      const documentUri = documentRoot.getAttribute("jf:document")
+      console.log("****documentUri=", documentUri, " when documentRoot=", documentRoot)
+      const documentUriSplit = documentUri.split("/")
+      const documentName = documentUriSplit[documentUriSplit.length - 1]
+      if (primaryDocumentName === documentName) {
+        return documentRoot
+      }
+    }
+    throw Error("In translation redirect, no primary document could be found for " + document)
+  }
+
+  /** Find the *other* parallel texts to a given parallel group
+   * @param linkageDocument {Document} The linkage document
+   * @param parallelGrp {Element} A parallelGrp element
+   * @return Array<Element> A list of parallelGrp elements
+   */
+  static getParallels(linkageDocument, parallelGrp) {
+    const target = parallelGrp.getAttribute("target")
+    const allParallelGrps = linkageDocument.getElementsByTagNameNS(JF_NS, "parallelGrp")
+    let actualParallels = []
+    for (let ctr = 0; ctr < allParallelGrps.length; ctr++) {
+      const pg = allParallelGrps.item(ctr)
+      const pgTarget = pg.getAttribute("target")
+      if (pgTarget === target && pg !== parallelGrp) {
+        actualParallels.push(pg)
+      }
+    }
+    return actualParallels
+  }
+
+  /** Find the borders of the linkage document fragment within the primary document
+   *
+   * @param primaryDocument {Element}
+   * @param fragment {string}
+   * @return {Node[]} stream, left and right node *or* one node indicating the whole stream
+   * @private
+   */
+  static _linkageDocumentFragment(primaryDocument, fragment) {
+    const stream = primaryDocument.getElementsByTagNameNS(JF_NS, "unflattened").item(0)
+    if (fragment == null || fragment === "") {
+      // an empty fragment means the primary text stream
+      return [stream, null, null]
+    }
+    else if (fragment.startsWith("range")) {
+      const [ _1, left, right, _2] = fragment.split(/[(,)]/) // range ( left , right )
+      const leftNode = DocumentApi.getId(primaryDocument, left, primaryDocument)
+      const rightNode = DocumentApi.getId(primaryDocument, right, primaryDocument)
+      return [stream, leftNode, rightNode]
+    }
+    else {
+      const idNode = DocumentApi.getId(primaryDocument, fragment, primaryDocument)
+      return [stream, idNode, idNode]
+    }
+  }
+
+  /** Mutate a linkage document in-place. The primary document is mutated, such that anything that is
+   * not within the bounds of the fragment is removed.
+   *
+   * @param linkageDocument {Document} The linkage document
+   * @param primaryDocument {Element} The primary document
+   * @param fragment {string} The fragment
+   * @return {Node} the start node of evaluation, with the side effect that linkageDocument may have been mutated
+   * @private
+   */
+  static _mutateLinkageDocument(linkageDocument, primaryDocument, fragment) {
+    const [stream, left, right] = Transformer._linkageDocumentFragment(primaryDocument, fragment)
+    if (left != null && left !== stream)  {
+        // if left is null, we just return the stream
+        // if "left" is the stream, then we don't need to mutate - we return the stream
+      // there is a range: the linkage document has to be traversed and nodes should be removed unless they are:
+      // within the range *or*
+      // ancestors of the left node *or*
+      // ancestors of the right node
+
+      const iterator = linkageDocument.createNodeIterator(stream, NodeFilter.SHOW_ELEMENT)
+      let toRemove = []
+      while(iterator.nextNode()) {
+        const thisNode = iterator.referenceNode
+        const nodeCompareStart = left.compareDocumentPosition(thisNode)
+        const nodeCompareEnd = right.compareDocumentPosition(thisNode)
+
+        if (nodeCompareStart === 0 || nodeCompareEnd === 0 ||
+          ((nodeCompareStart | nodeCompareEnd) & Node.DOCUMENT_POSITION_CONTAINS) ||
+          ( (nodeCompareStart & Node.DOCUMENT_POSITION_FOLLOWING) > 0 &&
+            (nodeCompareEnd & Node.DOCUMENT_POSITION_PRECEDING) > 0)
+          ) {}
+        else {
+          toRemove.push(thisNode)
+        }
+      }
+
+      toRemove.forEach( (_) => _.remove() )
+    }
+
+    return stream
+  }
+
+
+  /** Find the fragment from a linkage document
+   *
+   * @param document {string} The name of the document that was redirected.
+   *                      This will determine which parallel text should be considered primary.
+   * @param fragment {string} The fragment of the redirect (may be a range)
+   * @param linkageDocument {Document} The linkage document node
+   */
+  static redirectFragment(
+    document,
+    fragment,
+    linkageDocument
+  ) {
+    /* The input will look like:
+    * <jf:parallel-document>
+    *   <tei:idno>...</tei:idno>
+    *   <tei:TEI jf:document="...">
+    *     <tei:text>
+    *       <jf:unflattened>
+    *         <jf:parallelGrp target="...">
+    *           <jf:parallel domain="...">
+    *
+    * </jf:parallel-document>
+    */
+    const clone = linkageDocument.cloneNode(true)
+    const parallelDocumentRoots = clone.getElementsByTagNameNS(TEI_NS, "TEI")
+    const primaryDocument = Transformer._getPrimaryDocument(parallelDocumentRoots, document)
+    return Transformer._mutateLinkageDocument(clone, primaryDocument, fragment)
   }
 
 }

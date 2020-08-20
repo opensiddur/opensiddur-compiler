@@ -3,26 +3,27 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React from "react"
-import {DOCUMENT_CONTEXT_SWITCH, META_SOURCES} from "./Transformer"
+import React, {useContext, useEffect} from "react"
+import {DOCUMENT_CONTEXT_SWITCH} from "./Transformer"
 import TransformerMetadata from "./TransformerMetadata"
-import SourceList from "./SourceList"
-import Expandable from "./Expandable"
-import {faBookOpen} from "@fortawesome/free-solid-svg-icons"
+import {CurrentSourcesContext, GlobalSourcesContext} from "./SourcesMetadataContext"
 
 export default function UpdateSources(props) {
-  const metadata = props.metadata
+  const globalSourcesContext = useContext(GlobalSourcesContext)
+
   const full = props.chain.level >= DOCUMENT_CONTEXT_SWITCH
   const newSources = full && TransformerMetadata.contextSources(props.nodes[0])
-  const needsChange = full && newSources
+  const needsChange = !!(full && newSources)
+
+  useEffect( () => {
+    newSources && globalSourcesContext.registerGlobalState(newSources)
+  }, [needsChange])
 
   if (needsChange) {
-    const nextMetadata = metadata.set(META_SOURCES, newSources)
     return <div className="UpdateSources">
-      <Expandable icon={faBookOpen} title="Source list">
-        <SourceList sources={newSources} />
-      </Expandable>
-      { props.chain.nextWithMetadataUpdate(props, nextMetadata) }
+      <CurrentSourcesContext.Provider value={newSources}>
+      { props.chain.next(props) }
+      </CurrentSourcesContext.Provider>
     </div>
   }
   else {

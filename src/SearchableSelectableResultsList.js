@@ -22,16 +22,14 @@ export default function SearchableSelectableResultsList(props) {
   const [resultData, setResultData] = useState({})
   const [queryString, setQueryString] = useState("")
 
-  const fetchListData = () => {
+  useEffect(() => {
     const fetcher = async () => {
       const newResults = await DiscoveryApi.list(props.api, queryString, startIndex, itemsPerPage)
       setResultData(newResults)
     }
 
     fetcher()
-  }
-
-  useEffect(() => fetchListData(), [queryString, startIndex])
+  }, [queryString, startIndex, itemsPerPage, props.api])
 
   const queryCallback = (newQueryString) => {
     if (newQueryString !== queryString) {

@@ -6,7 +6,7 @@
 import DocumentApi from "../DocumentApi"
 import BaseApi, {ApiError} from "../BaseApi"
 import {text2xml} from "../TestUtils"
-import Transformer from "../Transformer"
+import Transformer, {TEI_NS} from "../Transformer"
 
 describe("document API", () => {
   const mockDocumentName = "mockument"
@@ -220,6 +220,53 @@ describe("DocumentApi.getId", () => {
     expect(result.tagName).toBe("tei:seg")
     expect(result.getAttribute("xml:id")).toBe("tst")
   })
+
+  it("should extract a node by xml:id in context", () => {
+    const xmlDocumentText = `
+      <tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0"
+               xmlns:jf="http://jewishliturgy.org/ns/jlptei/flat/1.0"
+               >
+           <tei:teiHeader/>
+           <tei:body>
+                <jf:unflattened>
+                    <tei:seg xml:id="tst">Test</tei:seg>
+                </jf:unflattened>
+           </tei:body>
+      </tei:TEI>
+    `
+    const xmlDocument = text2xml(xmlDocumentText)
+    xmlDocument.normalize()
+    const body = xmlDocument.getElementsByTagNameNS(TEI_NS, "body").item(0)
+    const result = DocumentApi.getId(xmlDocument, "tst", body)
+
+    expect(result.tagName).toBe("tei:seg")
+    expect(result.getAttribute("xml:id")).toBe("tst")
+  })
+
+  // jsdom does not support XPath evaluate with context (this does work correctly in browsers, though)
+  it.skip("should not extract a node by xml:id if it is out of context", () => {
+    const xmlDocumentText = `
+      <tei:TEI xmlns:tei="http://www.tei-c.org/ns/1.0"
+               xmlns:jf="http://jewishliturgy.org/ns/jlptei/flat/1.0"
+               >
+           <tei:teiHeader>
+            <tei:titleStmt xml:id="titleStmt"></tei:titleStmt>
+           </tei:teiHeader>
+           <tei:body xml:id="body">
+                <jf:unflattened>
+                    <tei:seg xml:id="tst">Test</tei:seg>
+                </jf:unflattened>
+           </tei:body>
+      </tei:TEI>
+    `
+    const xmlDocument = text2xml(xmlDocumentText)
+    xmlDocument.normalize()
+    const bodyElement = xmlDocument.getElementsByTagNameNS(TEI_NS, "body").item(0)
+    const result = DocumentApi.getId(xmlDocument, "titleStmt", bodyElement)
+
+    expect(result).toBeUndefined()
+  })
+
 })
 
 describe("DocumentApi.getFragment", () => {
@@ -265,5 +312,50 @@ describe("DocumentApi.getFragment", () => {
     expect(mockGetRange).toHaveBeenCalledTimes(1)
     expect(mockGetRange.mock.calls[0][1]).toBe("range(left,right)")
     expect(result).toBe(mockRange)
+  })
+})
+
+describe("DocumentApi.parseLinkagesFromHtml", () => {
+  it("should return an empty object when there are no linkages", () => {
+    const blankHtml = text2xml(`<html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+          <title>Linkage to Document</title>
+          <link rel="search" type="application/opensearchdescription+xml" href="/exist/restxq/api/data/OpenSearchDescription?source=/exist/restxq/api/data/linkage" title="Full text search" />
+          <meta name="startIndex" content="1" />
+          <meta name="itemsPerPage" content="100" />
+          <meta name="totalResults" content="0" />
+      </head>
+      <body>
+          <ul class="results">
+          </ul>
+      </body>
+    </html>`)
+    const parsed = DocumentApi.parseLinkagesFromHtml(blankHtml)
+    expect(parsed).toStrictEqual({})
+  })
+
+  it("should return an object when there are linkages", () => {
+    const withLinkagesHtml = text2xml(`<html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+          <title>Linkage to Document</title>
+          <link rel="search" type="application/opensearchdescription+xml" href="/exist/restxq/api/data/OpenSearchDescription?source=/exist/restxq/api/data/linkage" title="Full text search" />
+          <meta name="startIndex" content="1" />
+          <meta name="itemsPerPage" content="100" />
+          <meta name="totalResults" content="3" />
+      </head>
+      <body>
+          <ul class="results">
+            <li class="result"><a class="document" href="/exist/restxq/api/data/linkage/Document-1">IdOne</a></li>
+            <li class="result"><a class="document" href="/exist/restxq/api/data/linkage/Document-2">IdTwo</a></li>
+            <li class="result"><a class="document" href="/exist/restxq/api/data/linkage/Document-3">IdThree</a></li>
+          </ul>
+      </body>
+    </html>`)
+    const parsed = DocumentApi.parseLinkagesFromHtml(withLinkagesHtml)
+    expect(parsed).toStrictEqual({
+      "IdOne": "/api/data/linkage/Document-1",
+      "IdTwo": "/api/data/linkage/Document-2",
+      "IdThree": "/api/data/linkage/Document-3"
+    })
   })
 })

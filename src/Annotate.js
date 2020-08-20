@@ -4,7 +4,19 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 
-import {ParsedPtr} from "./Transformer"
+import {nsResolver, ParsedPtr} from "./Transformer"
+
+/** Determine if the given XML is a part, and, if so, if it is the first part
+ * @param xml {Node}
+ */
+export function isFirstPart(xml) {
+  if (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("jf:part")) {
+    const partId = xml.getAttribute("jf:part")
+    return (!xml.ownerDocument.evaluate(`preceding::*[@jf:part='${partId}']`,
+      xml, nsResolver, XPathResult.BOOLEAN_TYPE, null).booleanValue)
+  }
+  else return true
+}
 
 /** Annotation:
  *
@@ -22,7 +34,7 @@ export default function Annotate(props) {
     ].filter(_ => _)[0]
   )
 
-  if (annotationPtr) {
+  if (annotationPtr && isFirstPart(xml)) {
     const parsedPtr = ParsedPtr.parsePtr(annotationPtr)
     return [
       props.transformerRecursionFunction(parsedPtr.documentName, parsedPtr.fragment, props.metadata, "notes"),

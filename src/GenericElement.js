@@ -9,7 +9,7 @@ import "./GenericElement.css"
 
 export default function GenericElement(props) {
   const xml = props.nodes[0]
-  console.log("element node", xml)
+  //console.log("element node", xml)
   const parsedChildren = Transformer.traverseChildren(xml, props)
   return (<div className={xml.tagName}>
     {parsedChildren}

@@ -3,105 +3,115 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React from "react"
+import React, {useContext} from "react"
 import Transformer, {META_LANG} from "../Transformer"
 import {text2xml} from "../TestUtils"
 import TransformerMetadata from "../TransformerMetadata"
 import {render} from "@testing-library/react"
 import '@testing-library/jest-dom/extend-expect'
 import UpdateLanguage from "../UpdateLanguage"
+import {CurrentLanguageContext} from "../LanguageMetadataContext"
 
 describe("UpdateLanguage", () => {
 
   const mockChainNext = jest.fn()
-  const mockChainNextWithUpdate = jest.fn()
   const mockChain = {
-    next: mockChainNext,
-    nextWithMetadataUpdate: mockChainNextWithUpdate
+    next: mockChainNext
   }
+  const chainReturn = "chained"
+  const mockContextReport = jest.fn()
 
   beforeEach( () => {
     mockChainNext.mockReset()
-    mockChainNextWithUpdate.mockReset()
+    mockContextReport.mockReset()
+    mockChainNext.mockImplementation( () => {
+      return <CurrentLanguageContext.Consumer>{ lang =>
+        mockContextReport(lang) || chainReturn
+      }</CurrentLanguageContext.Consumer>
+    })
   })
 
-  it("chains the existing metadata when there is no lang metadata and no xml:lang", () => {
-    const metadata = new TransformerMetadata().set("something", "else")
+  it("chains when there is no lang metadata and no xml:lang", () => {
     const xml = [text2xml(`<test>one</test>`).documentElement]
 
     mockChainNext.mockReturnValue("chained")
 
-    const { queryByText } = render(<UpdateLanguage nodes={xml} metadata={metadata} chain={mockChain}/>)
+    const { queryByText } = render(<UpdateLanguage nodes={xml} chain={mockChain}/>)
 
+    expect(queryByText(chainReturn)).toBeInTheDocument()
+
+    expect(mockChainNext).toHaveBeenCalledTimes(1)
+    expect(mockChainNext.mock.calls[0][0]).toMatchObject({
+      nodes: xml,
+      chain: mockChain
+    })
+  })
+
+  it("chains when there is existing lang metadata and there is no xml:lang attribute", () => {
+    const lang = "xx"
+    const xml = [text2xml(`<test>one</test>`).documentElement]
+
+    const { queryByText } = render(
+      <CurrentLanguageContext.Provider value={lang}>
+        <UpdateLanguage nodes={xml} chain={mockChain}/>
+      </CurrentLanguageContext.Provider>
+    )
     expect(queryByText(/chained/)).toBeInTheDocument()
 
     expect(mockChainNext).toHaveBeenCalledTimes(1)
     expect(mockChainNext.mock.calls[0][0]).toMatchObject({
       nodes: xml,
-      metadata: metadata,
       chain: mockChain
     })
-  })
-
-  it("chains the existing lang metadata when there is no xml:lang attribute", () => {
-    const metadata = new TransformerMetadata().set("something", "else").set(META_LANG, "en")
-    const xml = [text2xml(`<test>one</test>`).documentElement]
-
-    mockChainNext.mockReturnValue("chained")
-
-    const { queryByText } = render(<UpdateLanguage nodes={xml} metadata={metadata} chain={mockChain}/>)
-
-    expect(queryByText(/chained/)).toBeInTheDocument()
-
-    expect(mockChainNext).toHaveBeenCalledTimes(1)
-    expect(mockChainNext.mock.calls[0][0]).toMatchObject({
-      nodes: xml,
-      metadata: metadata,
-      chain: mockChain
-    })
+    expect(mockContextReport).toHaveBeenCalledTimes(1)
+    expect(mockContextReport.mock.calls[0][0]).toBe(lang)
   })
 
   it("returns a new language div wrapper when there is no lang metadata and an xml:lang attribute", () => {
-    const metadata = new TransformerMetadata().set("something", "else")
-    const expectedMetadata = metadata.set(META_LANG, "en")
+    const newLang = "en"
     const xml = [text2xml(`<test xml:lang="en">one</test>`).documentElement]
 
-    mockChainNextWithUpdate.mockReturnValue("chained")
-
-    const { container, queryByText } = render(<UpdateLanguage nodes={xml} metadata={metadata} chain={mockChain}/>)
+    const { container, queryByText } = render(
+      <CurrentLanguageContext.Provider value={null}>
+        <UpdateLanguage nodes={xml} chain={mockChain}/>
+      </CurrentLanguageContext.Provider>)
 
     expect(container.querySelector("div.UpdateLanguage[lang='en']")).toBeInTheDocument()
 
-    expect(queryByText(/chained/)).toBeInTheDocument()
+    expect(queryByText(chainReturn)).toBeInTheDocument()
 
-    expect(mockChainNextWithUpdate).toHaveBeenCalledTimes(1)
-    expect(mockChainNextWithUpdate.mock.calls[0][0]).toMatchObject({
+    expect(mockChainNext).toHaveBeenCalledTimes(1)
+    expect(mockChainNext.mock.calls[0][0]).toMatchObject({
       nodes: xml,
-      metadata: metadata,
       chain: mockChain
     })
-    expect(mockChainNextWithUpdate.mock.calls[0][1]).toMatchObject(expectedMetadata)
+
+    expect(mockContextReport).toHaveBeenCalledTimes(1)
+    expect(mockContextReport.mock.calls[0][0]).toBe(newLang)
   })
 
   it("returns a new language div wrapper when there is lang metadata and a different xml:lang attribute", () => {
-    const metadata = new TransformerMetadata().set("something", "else").set(META_LANG, "he")
-    const expectedMetadata = metadata.set(META_LANG, "en")
+    const oldLang = "he"
+    const newLang = "en"
     const xml = [text2xml(`<test xml:lang="en">one</test>`).documentElement]
 
-    mockChainNextWithUpdate.mockReturnValue("chained")
-
-    const { container, queryByText } = render(<UpdateLanguage nodes={xml} metadata={metadata} chain={mockChain}/>)
+    const { container, queryByText } = render(
+      <CurrentLanguageContext.Provider value={oldLang}>
+      <UpdateLanguage nodes={xml} chain={mockChain}/>
+      </CurrentLanguageContext.Provider>
+    )
 
     expect(container.querySelector("div.UpdateLanguage[lang='en']")).toBeInTheDocument()
 
-    expect(queryByText(/chained/)).toBeInTheDocument()
+    expect(queryByText(chainReturn)).toBeInTheDocument()
 
-    expect(mockChainNextWithUpdate).toHaveBeenCalledTimes(1)
-    expect(mockChainNextWithUpdate.mock.calls[0][0]).toMatchObject({
+    expect(mockChainNext).toHaveBeenCalledTimes(1)
+    expect(mockChainNext.mock.calls[0][0]).toMatchObject({
       nodes: xml,
-      metadata: metadata,
       chain: mockChain
     })
-    expect(mockChainNextWithUpdate.mock.calls[0][1]).toMatchObject(expectedMetadata)
+
+    expect(mockContextReport).toHaveBeenCalledTimes(1)
+    expect(mockContextReport.mock.calls[0][0]).toBe(newLang)
   })
 })
