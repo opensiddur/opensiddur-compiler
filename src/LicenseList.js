@@ -1,4 +1,4 @@
-/* SmallLicenseBox
+/* LicenseList
  * Copyright 2019 Efraim Feinstein <efraim@opensiddur.org>
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
@@ -34,18 +34,13 @@ export class License {
 
 }
 
-/** Display a license link and text, given a license URL
+/** List licenses
  *
- * @param props license: license URL for a supported Creative Commons License
+ * @param licenses {Iterable} An iterable of licenses
+ * @return {*}
  * @constructor
  */
-export default function SmallLicenseBox(props) {
-  const licenseName = new License().urlToName(props.license)
-
-  return (<div className="LicenseBox">License: <a href={props.license}>{licenseName}</a></div>)
-}
-
-export function LicenseList({licenses}) {
+export default function LicenseList({licenses}) {
   const lic = new License()
   const licenseNames = Array.from(licenses).map ( (L) => { return {url: L, name: lic.urlToName(L) } })
 

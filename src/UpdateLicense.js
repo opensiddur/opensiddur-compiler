@@ -4,11 +4,8 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React, {useContext, useEffect} from "react"
-import {DOCUMENT_CONTEXT_SWITCH, META_LICENSE} from "./Transformer"
+import {DOCUMENT_CONTEXT_SWITCH} from "./Transformer"
 import TransformerMetadata from "./TransformerMetadata"
-import SmallLicenseBox from "./SmallLicenseBox"
-import {faGavel} from "@fortawesome/free-solid-svg-icons"
-import Expandable from "./Expandable"
 import {CurrentLicenseContext, GlobalLicenseContext} from "./LicenseMetadataContext"
 
 /** update the licensing metadata. License data can only change when the document has changed

@@ -19,7 +19,8 @@ export const GlobalContributorContext = React.createContext({})
 export const ActiveContributorContext = React.createContext({})
 export const CurrentContributorContext = React.createContext({})
 
-const contributorReducer = (oldContributorList, newContributorList) => {
+/** Return a combined contributor list */
+export function contributorReducer(oldContributorList, newContributorList) {
   let contributorsByType = {}
   for (const contribType of Object.keys(CONTRIBUTOR_TYPES)) {
     contributorsByType[contribType] = new Set([
@@ -30,5 +31,6 @@ const contributorReducer = (oldContributorList, newContributorList) => {
   return contributorsByType
 }
 
+/* istanbul ignore next */
 export const ContributorMetadataContext = (props) =>
   GenericMetadataContext(props, GlobalContributorContext, ActiveContributorContext, contributorReducer)

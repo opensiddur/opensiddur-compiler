@@ -24,11 +24,11 @@ export const CurrentLicenseContext = React.createContext(null)
  * @param newLicense {String}
  * @return {Set}
  */
-const licenseReducer = (oldLicenseList, newLicense) => {
-  console.log("whatsit? ", oldLicenseList, "+", newLicense)
+export function licenseReducer(oldLicenseList, newLicense) {
   return new Set(oldLicenseList).add(newLicense)
 }
 
+/* istanbul ignore next */
 export const LicenseMetadataContext = (props) =>
   GenericMetadataContext(props, GlobalLicenseContext, ActiveLicenseContext, licenseReducer,
     defaultActivationReducer, new Set(), null)

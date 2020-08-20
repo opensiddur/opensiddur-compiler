@@ -1,4 +1,4 @@
-/* SmallLicenseBox.test
+/* LicenseList.test
  * Copyright 2019 Efraim Feinstein <efraim@opensiddur.org>
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
@@ -7,8 +7,8 @@ import React from "react"
 import '@testing-library/jest-dom/extend-expect'
 
 import { render } from "@testing-library/react"
-import {License} from "../SmallLicenseBox"
-import SmallLicenseBox from "../SmallLicenseBox"
+import {License} from "../LicenseList"
+import LicenseList from "../LicenseList"
 
 describe("License class", () => {
   const lic = new License()
@@ -38,14 +38,29 @@ describe("License class", () => {
   })
 })
 
-describe("SmallLicenseBox", () => {
-  it("expands and renders the name of the license given by the URL", () => {
+describe("LicenseList", () => {
+  it("renders the name of a single license given by the URL", () => {
     const testLicense = "http://www.creativecommons.org/licenses/by/4.0"
-    const { getByText, getByRole } = render(<SmallLicenseBox license={testLicense}/>)
+    const { getByText } = render(<LicenseList licenses={[testLicense]}/>)
 
     const licenseText = getByText(/Creative Commons/)
     expect(licenseText.textContent).toMatch(/Attribution/)
     expect(licenseText.textContent).toMatch(/4\.0/)
     expect(licenseText.href).toBe(testLicense)
+  })
+
+  it("expands and renders the names of multiple licenses given URLs", () => {
+    const zero = "http://www.creativecommons.org/publicdomain/zero/1.0"
+    const by = "http://www.creativecommons.org/licenses/by/4.0"
+    const testLicenses = [zero, by]
+    const { getByText } = render(<LicenseList licenses={testLicenses}/>)
+
+    const pd = getByText(/Zero/)
+    expect(pd).toBeInTheDocument()
+    expect(pd.href).toBe(zero)
+
+    const attribution = getByText(/Attribution/)
+    expect(attribution).toBeInTheDocument()
+    expect(attribution.href).toBe(by)
   })
 })

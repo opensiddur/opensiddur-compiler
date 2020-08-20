@@ -18,7 +18,7 @@ export const CurrentSourcesContext = React.createContext([])
  * @param newSourceList {Array<ContextSourceInfo>}
  * @return {Array<ContextSourceInfo>}
  */
-const sourcesReducer = (oldSourceList, newSourceList) => {
+export function sourcesReducer(oldSourceList, newSourceList) {
   let reduced = [...oldSourceList] // copy oldSourceList
 
   let sourceResources = new Set(reduced.map ( (sc) => sc.resource ))
@@ -32,6 +32,7 @@ const sourcesReducer = (oldSourceList, newSourceList) => {
   return reduced
 }
 
+/* istanbul ignore next */
 export const SourcesMetadataContext = (props) =>
   GenericMetadataContext(props, GlobalSourcesContext, ActiveSourcesContext, sourcesReducer, defaultActivationReducer,
     [], null)

@@ -10,7 +10,7 @@ import {useParams} from "react-router"
 import ViewTransformer from "./ViewTransformer"
 import TransformerMetadata from "./TransformerMetadata"
 import {ContributorMetadataContext} from "./ContributorMetadataContext"
-import MetadataViewer, {GlobalMetadataViewer} from "./MetadataViewer"
+import {ActiveMetadataViewer, GlobalMetadataViewer} from "./MetadataViewer"
 import {LicenseMetadataContext} from "./LicenseMetadataContext"
 import {SourcesMetadataContext} from "./SourcesMetadataContext"
 
@@ -29,7 +29,7 @@ export default function Viewer() {
             <GlobalMetadataViewer/>
           </div>
           <div className="RightSidebar" >
-            <MetadataViewer/>
+            <ActiveMetadataViewer/>
           </div>
         </SourcesMetadataContext>
       </LicenseMetadataContext>

@@ -4,7 +4,7 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
-import Transformer, {DOCUMENT_CONTEXT_SWITCH, ELEMENT_CONTEXT_SWITCH, LOCATION_CONTEXT_SWITCH} from "./Transformer"
+import Transformer, {DOCUMENT_CONTEXT_SWITCH, ELEMENT_CONTEXT_SWITCH} from "./Transformer"
 import "./JfParallelGrp.css"
 
 export default function JfParallelGrp(props) {
