@@ -13,26 +13,35 @@ import {ContributorMetadataContext} from "./ContributorMetadataContext"
 import {ActiveMetadataViewer, GlobalMetadataViewer} from "./MetadataViewer"
 import {LicenseMetadataContext} from "./LicenseMetadataContext"
 import {SourcesMetadataContext} from "./SourcesMetadataContext"
+import {AnnotationMetadataContext} from "./AnnotationMetadataContext"
+import ActiveAnnotationViewer from "./ActiveAnnotationViewer"
+import InlineModeContext from "./InlineModeContext"
 
 export default function Viewer() {
   const {document} = useParams()
   const metadata = new TransformerMetadata()
   // just a placeholder
   return ( <div className="Viewer">
-    <ContributorMetadataContext>
-      <LicenseMetadataContext>
-        <SourcesMetadataContext>
-          <h1>{document}</h1>
-          <div className="LeftSidebar" />
-          <div className="Content">
-            <ViewTransformer document={document} metadata={metadata}/>
-            <GlobalMetadataViewer/>
-          </div>
-          <div className="RightSidebar" >
-            <ActiveMetadataViewer/>
-          </div>
-        </SourcesMetadataContext>
-      </LicenseMetadataContext>
-    </ContributorMetadataContext>
+    <AnnotationMetadataContext>
+      <ContributorMetadataContext>
+        <InlineModeContext>
+          <LicenseMetadataContext>
+            <SourcesMetadataContext>
+              <div className="LeftSidebar" >
+                <ActiveAnnotationViewer/>
+              </div>
+              <div className="Content">
+                <h1>{document}</h1>
+                <ViewTransformer document={document} metadata={metadata}/>
+                <GlobalMetadataViewer/>
+              </div>
+              <div className="RightSidebar" >
+                <ActiveMetadataViewer/>
+              </div>
+            </SourcesMetadataContext>
+          </LicenseMetadataContext>
+        </InlineModeContext>
+      </ContributorMetadataContext>
+    </AnnotationMetadataContext>
   </div>)
 }

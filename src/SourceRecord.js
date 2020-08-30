@@ -3,8 +3,7 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React, {useEffect, useState} from "react"
-import ContextSourceInfo from "./ContextSourceInfo"
+import React, {Fragment, useEffect, useState} from "react"
 import SourceApi from "./SourceApi"
 import {CONTRIBUTOR_TYPES} from "./Transformer"
 
@@ -118,13 +117,37 @@ export default function SourceRecord(props) {
   }, [resource])
 
   return (<div className="SourceRecord" key={resource} lang={content.lang}>
-    { (content.analytic) && ([<SourceRecordPart part={content.analytic} type="analytic"/>, <i>in</i>])}
-    { (content.monogr) && ([<SourceRecordPart part={content.monogr} type="monogr"/>, " " ]) }
-    { (content.series) && ([<i>in</i>, <SourceRecordPart part={content.series} type="series"/>, " "]) }
-    { (content.edition) && ([<span className="edition">{content.edition}</span>, ". "])}
+    { (content.analytic) && (
+      <Fragment>
+        <SourceRecordPart part={content.analytic} type="analytic"/> <i>in</i>
+      </Fragment>)}
+    { (content.monogr) && (
+      <Fragment>
+        <SourceRecordPart part={content.monogr} type="monogr"/>
+        <span>{" "}</span>
+      </Fragment>) }
+    { (content.series) && (
+      <Fragment>
+        <i>in</i>
+        <SourceRecordPart part={content.series} type="series"/>
+        <span>{" "}</span>
+      </Fragment>) }
+    { (content.edition) && (
+      <Fragment>
+        <span className="edition">{content.edition}</span>
+        <span>{". "}</span>
+      </Fragment>)}
     { (content.publisher) && (<span className="publisher">{content.publisher}: </span>)}
-    { (content.publicationPlace) && ([<span className="publicationPlace">{content.publicationPlace}</span>, ", "])}
-    { (content.publicationDate) && ([<span className="publicationDate">{content.publicationDate}</span>, ". "])}
+    { (content.publicationPlace) && (
+      <Fragment>
+        <span className="publicationPlace">{content.publicationPlace}</span>
+        <span>{", "}</span>
+      </Fragment>)}
+    { (content.publicationDate) && (
+      <Fragment>
+        <span className="publicationDate">{content.publicationDate}</span>
+        <span>{". "}</span>
+      </Fragment>)}
     { (content.distributor || content.distributorWeb) && (
       <span className="distributor">
         { (content.distributorWeb) && ([<a className="distributorWeb" href={content.distributorWeb}>{content.distributor}</a>, " "]) }
@@ -133,7 +156,11 @@ export default function SourceRecord(props) {
         SourceRecordUtil.joinListOfReactElements([<span className="distributorAccessDate">{content.distributorAccessDate}</span>], "", ".", ". Accessed ")}
       </span>
     )}
-    { (content.copyright) && ([<span className="copyrightNote">{content.copyright}</span>, " " ])}
+    { (content.copyright) && (
+      <Fragment>
+        <span className="copyrightNote">{content.copyright}</span>
+        <span>{" "}</span>
+      </Fragment>)}
     { (content.note) && (<span className="biblioNote">{content.note}</span>) }
   </div> )
 

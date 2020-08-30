@@ -221,7 +221,7 @@ export default function UpdateConditionals(props) {
     if (hasUpdates) {
       getAllConditions()
     }
-  }, [props.metadata, props.documentName, props.documentApi, hasUpdates])
+  }, [props.metadata, props.documentName, props.documentApi, hasUpdates, xml])
 
   useEffect(() => {
     setConditionalEvaluation(evaluate(conditions, settings))

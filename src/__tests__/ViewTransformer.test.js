@@ -4,13 +4,14 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
-import { render, wait } from '@testing-library/react'
+import {render, wait} from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
 import ViewTransformer, {ViewTransformerUtils} from "../ViewTransformer"
 import DocumentApi from "../DocumentApi"
-import Transformer, {META_INLINE_MODE, META_SETTINGS, SETTINGS_OPENSIDDUR, SETTINGS_TRANSLATION} from "../Transformer"
+import Transformer, {META_SETTINGS, SETTINGS_OPENSIDDUR, SETTINGS_TRANSLATION} from "../Transformer"
 import TransformerMetadata from "../TransformerMetadata"
+import {InlineMode} from "../InlineModeContext"
 
 const mockDocGet = jest.fn()
 
@@ -74,7 +75,6 @@ describe("ViewTransformer component", () => {
   const transformedDocument = <div className="transformed">Transformed</div>
 
   const metadata = new TransformerMetadata()
-  const inlineMode = new TransformerMetadata().set(META_INLINE_MODE, true)
 
   it("renders a requested transformed document with no translation redirect", async () => {
     mockUtilsTranslationRedirect.mockResolvedValue(null)
@@ -152,7 +152,10 @@ describe("ViewTransformer component", () => {
     mockDocGet.mockResolvedValue(docContentXml)
     mockApply.mockReturnValueOnce(transformedDocument)
 
-    const { getByText } = render(<ViewTransformer document={docName} metadata={inlineMode} />)
+    const { getByText } = render(
+      <InlineMode.Provider value={true}>
+        <ViewTransformer document={docName} />
+      </InlineMode.Provider>)
     expect(getByText(/Loading/i)).toBeInTheDocument()
 
     await wait()

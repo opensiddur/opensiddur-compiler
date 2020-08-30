@@ -56,7 +56,7 @@ export default class TransformerMetadata {
   static contextLicense(xml) {
     const docNode = TransformerMetadata.contextTEIRoot(xml)
     const licenseNode = docNode.getElementsByTagNameNS(TEI_NS, "licence")[0]
-    const licenseUri = licenseNode.getAttribute("target")
+    const licenseUri = licenseNode && licenseNode.getAttribute("target")
     return licenseUri
   }
 

@@ -3,7 +3,7 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 
 export default function SelectableResult(props) {
   /* props:

@@ -10,9 +10,10 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React, {useEffect, useState} from "react"
-import Transformer, {META_INLINE_MODE, META_SETTINGS, SETTINGS_OPENSIDDUR, SETTINGS_TRANSLATION} from "./Transformer"
+import React, {useContext, useEffect, useState} from "react"
+import Transformer, {META_SETTINGS, SETTINGS_OPENSIDDUR, SETTINGS_TRANSLATION} from "./Transformer"
 import DocumentApi from "./DocumentApi"
+import {InlineMode} from "./InlineModeContext"
 
 /** Independently testable utility functions */
 export class ViewTransformerUtils {
@@ -48,7 +49,9 @@ export default function ViewTransformer(props) {
   const fragment = (props.fragment) ? decodeURIComponent(props.fragment) : null
   const metadata = props.metadata
 
-  const originalSuffix = metadata.get(META_INLINE_MODE) === true ? "flat" : "combined"
+  const inlineMode = useContext(InlineMode)
+
+  const originalSuffix = inlineMode ? "flat" : "combined"
 
   const [content, setContent] = useState()
 

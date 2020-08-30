@@ -5,6 +5,13 @@
  */
 
 import {nsResolver, ParsedPtr} from "./Transformer"
+import {
+  ActiveAnnotationContext,
+  CurrentAnnotationContext,
+  currentAnnotationReducer,
+  GlobalAnnotationContext
+} from "./AnnotationMetadataContext"
+import React, {useContext, useEffect, useMemo} from "react"
 
 /** Determine if the given XML is a part, and, if so, if it is the first part
  * @param xml {Node}
@@ -17,6 +24,8 @@ export function isFirstPart(xml) {
   }
   else return true
 }
+
+export const ANNOTATION_MARK = "&#x26ac;"
 
 /** Annotation:
  *
@@ -33,13 +42,40 @@ export default function Annotate(props) {
       xml.hasAttribute("jf:conditional-instruction") && xml.getAttribute("jf:conditional-instruction")
     ].filter(_ => _)[0]
   )
+  const isInstruction = (xml.nodeType === Node.ELEMENT_NODE && (
+    xml.hasAttribute("jf:conditional-instruction") ||
+      xml.tagName === "jf:instruction"
+  ))
+  const currentAnnotations = useContext(CurrentAnnotationContext)
+  const globalAnnotations = useContext(GlobalAnnotationContext)
+  const activeAnnotations = useContext(ActiveAnnotationContext)
 
-  if (annotationPtr && isFirstPart(xml)) {
+  const activate = () => {
+    activeAnnotations.activateState(new Set([annotationPtr]))
+  }
+  const randomId = useMemo( () => {
+    return "annotate_" + Math.floor(Math.random()*10000000000).toString()
+  }, [])
+
+  useEffect( () => {
+    annotationPtr && globalAnnotations.registerGlobalState({[annotationPtr]: new Set([randomId])})
+  }, [annotationPtr, randomId])
+
+  if (annotationPtr) {
     const parsedPtr = ParsedPtr.parsePtr(annotationPtr)
-    return [
-      props.transformerRecursionFunction(parsedPtr.documentName, parsedPtr.fragment, props.metadata, "notes"),
-      props.chain.next(props)
-    ]
+    const annotationMarker = <sup onClick={activate}>{ANNOTATION_MARK}</sup>
+    const firstPart = isFirstPart(xml)
+
+    return (
+      <div className="Annotate" id={randomId}>
+        <CurrentAnnotationContext.Provider
+          value={currentAnnotationReducer(currentAnnotations, new Set([annotationPtr]))}>
+          { !isInstruction && firstPart && <span className="AnnotationMarker">{annotationMarker}</span>}
+          { isInstruction && firstPart && props.transformerRecursionFunction(parsedPtr.documentName, parsedPtr.fragment, props.metadata, "notes") }
+          { props.chain.next(props) }
+        </CurrentAnnotationContext.Provider>
+      </div>
+    )
   }
   else return props.chain.next(props)
 }

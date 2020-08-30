@@ -3,7 +3,7 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React from "react"
+import React, {useContext} from "react"
 import UpdateLanguage from "./UpdateLanguage"
 import UpdateLicense from "./UpdateLicense"
 import UpdateContributors from "./UpdateContributors"
@@ -21,6 +21,7 @@ import TeiAnchor from "./TeiAnchor"
 import UpdateConditionals from "./UpdateConditionals"
 import DocumentApi from "./DocumentApi"
 import JfParallelGrp from "./JfParallelGrp"
+import {InlineMode} from "./InlineModeContext"
 
 // TODO:
 // test transform()
@@ -37,7 +38,6 @@ import JfParallelGrp from "./JfParallelGrp"
 // add support for live conditional evaluation
 // add styling
 
-export const META_INLINE_MODE = "inline"
 export const META_SETTINGS = "settings"
 
 // all system-wide settings are stored here...
@@ -178,9 +178,9 @@ export default class Transformer {
   // standardProps.nodes[0] is an element
   static transformElement(standardProps) {
     const xml = standardProps.nodes[0]
-    const metadata = standardProps.metadata
+    const inline = useContext(InlineMode)
 
-    if (metadata.get(META_INLINE_MODE) && xml.hasAttribute("jf:layer-id")) {
+    if (inline && xml.hasAttribute("jf:layer-id")) {
       // inline mode and the element is not from the stream - skip it
       return null
     }

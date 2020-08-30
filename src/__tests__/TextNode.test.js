@@ -12,6 +12,7 @@ import TextNode from "../TextNode"
 import {ActiveContributorContext, CurrentContributorContext} from "../ContributorMetadataContext"
 import {ActiveLicenseContext, CurrentLicenseContext} from "../LicenseMetadataContext"
 import {ActiveSourcesContext, CurrentSourcesContext} from "../SourcesMetadataContext"
+import {ActiveAnnotationContext, CurrentAnnotationContext} from "../AnnotationMetadataContext"
 
 describe("TextNode", () => {
   const txt = [text2xml(`<test>one</test>`).documentElement.firstChild]
@@ -30,6 +31,9 @@ describe("TextNode", () => {
   })
 
   it("activates contextual information on click", () => {
+    const currentAnnotation = "ANN"
+    const annotationActivate = jest.fn()
+
     const currentContributor = "CONT"
     const contributorActivate = jest.fn()
 
@@ -40,25 +44,32 @@ describe("TextNode", () => {
     const sourcesActivate = jest.fn()
 
     const { queryByText } = render(
-      <ActiveContributorContext.Provider value={{activeState: null, activateState: contributorActivate}}>
-        <CurrentContributorContext.Provider value={currentContributor}>
-          <ActiveLicenseContext.Provider value={{activeState: null, activateState: licenseActivate}}>
-            <CurrentLicenseContext.Provider value={currentLicense}>
-              <ActiveSourcesContext.Provider value={{activeState: null, activateState: sourcesActivate}}>
-                <CurrentSourcesContext.Provider value={currentSources}>
-                  <TextNode nodes={txt}/>
-                </CurrentSourcesContext.Provider>
-              </ActiveSourcesContext.Provider>
-            </CurrentLicenseContext.Provider>
-          </ActiveLicenseContext.Provider>
-        </CurrentContributorContext.Provider>
-      </ActiveContributorContext.Provider>
+      <ActiveAnnotationContext.Provider value={{activeState: null, activateState: annotationActivate}}>
+        <CurrentAnnotationContext.Provider value={currentAnnotation}>
+          <ActiveContributorContext.Provider value={{activeState: null, activateState: contributorActivate}}>
+            <CurrentContributorContext.Provider value={currentContributor}>
+              <ActiveLicenseContext.Provider value={{activeState: null, activateState: licenseActivate}}>
+                <CurrentLicenseContext.Provider value={currentLicense}>
+                  <ActiveSourcesContext.Provider value={{activeState: null, activateState: sourcesActivate}}>
+                    <CurrentSourcesContext.Provider value={currentSources}>
+                      <TextNode nodes={txt}/>
+                    </CurrentSourcesContext.Provider>
+                  </ActiveSourcesContext.Provider>
+                </CurrentLicenseContext.Provider>
+              </ActiveLicenseContext.Provider>
+            </CurrentContributorContext.Provider>
+          </ActiveContributorContext.Provider>
+        </CurrentAnnotationContext.Provider>
+      </ActiveAnnotationContext.Provider>
       )
 
     const text = queryByText(/one/)
     expect(text).toBeInTheDocument()
 
     text.click()
+    expect(annotationActivate).toHaveBeenCalledTimes(1)
+    expect(annotationActivate.mock.calls[0][0]).toBe(currentAnnotation)
+
     expect(contributorActivate).toHaveBeenCalledTimes(1)
     expect(contributorActivate.mock.calls[0][0]).toBe(currentContributor)
 

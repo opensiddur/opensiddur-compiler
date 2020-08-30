@@ -76,13 +76,13 @@ export function settingsStructureFromXml(xmlElements) {
       case "tei:fs":
         const fsType = xml.getAttribute("type")
         return {
-          [fsType] : Object.assign({}, ... settingsStructureFromXml(
+          [fsType] : Object.assign({}, ...settingsStructureFromXml(
             Array.from(xml.childNodes).filter( node => node.nodeType === Node.ELEMENT_NODE)))
         }
       case "tei:f":
         const fName = xml.getAttribute("name")
-        const children = Array.from(xml.childNodes).
-          filter( node => {
+        const children = Array.from(xml.childNodes)
+          .filter( node => {
             return (
               node.nodeType === Node.TEXT_NODE && node.textContent.trim()
             ) || (

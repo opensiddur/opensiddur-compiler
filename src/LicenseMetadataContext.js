@@ -4,7 +4,6 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
-import {CONTRIBUTOR_TYPES} from "./Transformer"
 import GenericMetadataContext, {defaultActivationReducer} from "./GenericMetadataContext"
 
 /* License has 3 types of context:

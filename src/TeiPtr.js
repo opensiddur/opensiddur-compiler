@@ -4,8 +4,9 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 import React from "react"
-import Transformer, {LOCATION_CONTEXT_SWITCH, META_INLINE_MODE, ParsedPtr} from "./Transformer"
+import Transformer, {LOCATION_CONTEXT_SWITCH, ParsedPtr} from "./Transformer"
 import DocumentApi from "./DocumentApi"
+import {InlineMode} from "./InlineModeContext"
 
 export default function TeiPtr(props) {
   const xml = props.nodes[0]
@@ -13,10 +14,6 @@ export default function TeiPtr(props) {
   const type = xml.hasAttribute("type") && xml.attributes["type"].value
   const target = xml.attributes["target"].value
   const inline = type === "inline"
-  const nextMetadata = metadata.set(META_INLINE_MODE, inline)
-  const nextProps = Object.assign({}, props)
-  nextProps.metadata = nextMetadata
-  //console.log("ptr", target)
 
   if (type === "url") {
     // tei:ptr is an empty element, html:a is not
@@ -30,13 +27,15 @@ export default function TeiPtr(props) {
       // the fragment identifies a part of the same document, there is no need to reload
       const thisFragment = DocumentApi.getFragment(xml.ownerDocument, parsedPtr.fragment)
 
-      content = Transformer.applyTo(thisFragment, nextProps, LOCATION_CONTEXT_SWITCH)
+      content = Transformer.applyTo(thisFragment, props, LOCATION_CONTEXT_SWITCH)
     }
     else {
-      content = props.transformerRecursionFunction(documentName || props.documentName, parsedPtr.fragment, nextMetadata)
+      content = props.transformerRecursionFunction(documentName || props.documentName, parsedPtr.fragment, metadata)
     }
     return (
-      <div className={xml.tagName}>{content}</div>
+      <div className={xml.tagName}>
+        <InlineMode.Provider value={inline}>{content}</InlineMode.Provider>
+      </div>
     )
   }
 

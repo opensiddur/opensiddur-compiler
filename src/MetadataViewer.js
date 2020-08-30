@@ -23,9 +23,10 @@ export function ActiveMetadataViewer({ children }) {
     licenseContext.activateState(null)
     sourceContext.activateState(null)
   }
+  const anyActiveState = licenseContext.activeState || sourceContext.activeState || !!contributorContext.activeState
 
   return <div className="ActiveMetadataViewer">
-    <button onClick={deactivate}>Close</button>
+    { anyActiveState && <button onClick={deactivate}>Close</button> }
     { children }
     { licenseContext.activeState && <LicenseList licenses={[licenseContext.activeState]}/>}
     { sourceContext.activeState && <SourceList sources={sourceContext.activeState}/>}

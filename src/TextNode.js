@@ -8,10 +8,14 @@ import {ActiveContributorContext, CurrentContributorContext} from "./Contributor
 import {useContext} from "react"
 import {ActiveLicenseContext, CurrentLicenseContext} from "./LicenseMetadataContext"
 import {ActiveSourcesContext, CurrentSourcesContext} from "./SourcesMetadataContext"
+import {ActiveAnnotationContext, CurrentAnnotationContext} from "./AnnotationMetadataContext"
 
 export default function TextNode(props) {
   const xml = props.nodes[0]
   const content = xml.wholeText || null
+
+  const activeAnnotationContext = useContext(ActiveAnnotationContext)
+  const currentAnnotationContext = useContext(CurrentAnnotationContext)
 
   const activeContributorContext = useContext(ActiveContributorContext)
   const currentContributorContext = useContext(CurrentContributorContext)
@@ -23,6 +27,7 @@ export default function TextNode(props) {
   const currentSourcesContext = useContext(CurrentSourcesContext)
 
   const activate = () => {
+    activeAnnotationContext.activateState(currentAnnotationContext)
     activeContributorContext.activateState(currentContributorContext)
     activeLicenseContext.activateState(currentLicenseContext)
     activeSourcesContext.activateState(currentSourcesContext)
