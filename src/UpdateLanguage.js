@@ -22,14 +22,16 @@ export default function UpdateLanguage(props) {
     (xml.nodeType === Node.ELEMENT_NODE && xml.hasAttribute("xml:lang") && xml.getAttribute("xml:lang"))
   const needsChange = !!(newLang && (!oldLang || oldLang !== newLang))
 
+  const chained = props.chain.next(props)
+
   if (needsChange) {
     return <div className="UpdateLanguage" lang={newLang}>
       <CurrentLanguageContext.Provider value={newLang}>
-        {props.chain.next(props)}
+        {chained}
       </CurrentLanguageContext.Provider>
     </div>
   }
   else {
-    return props.chain.next(props)
+    return chained
   }
 }

@@ -10,19 +10,25 @@ import {CONTRIBUTOR_TYPES} from "./Transformer"
 export class SourceRecordUtil {
   static joinListOfReactElements(arr, joiner, ender, beginner) {
     const arrLast = arr.length - 1
-    return arr.flatMap( (value, index) => {
-      const begin = (index === 0 && beginner) ?
-        [<span className="BiblioListBegin">{beginner}</span>] : []
-      return begin.concat([value, (index === arrLast) ?
-        <span className="BiblioListEnd">{ender}</span> :
-        <span className="BiblioListJoin">{joiner}</span>])
-    })
+    return (arr.length > 0) ? (<Fragment>
+        {beginner && <span className="BiblioListBegin">{beginner}</span>}
+        { arr.map( (value, index) => {
+          return (
+            <Fragment key={index}>
+              {value}
+              { (index < arrLast) && <span className="BiblioListJoin">{joiner}</span> }
+            </Fragment>
+          )
+        })}
+        { ender && <span className="BiblioListEnd">{ender}</span> }
+      </Fragment>
+    ) : null
   }
 
   /** Given an array of objects that include a name, produce a list of nameType spans */
   static namedList(arr, nameType, joiner=", ", ender=". ") {
     const arrayList = arr.map( a => <span className={nameType}>{a.name}</span>)
-    return (arr.length > 0) ? SourceRecordUtil.joinListOfReactElements(arrayList, joiner, ender) : []
+    return SourceRecordUtil.joinListOfReactElements(arrayList, joiner, ender)
   }
 
   /** Produce a list of React elements to represent a responsibility list. Each arr object must contain a resp and name */
@@ -42,22 +48,22 @@ export class SourceRecordUtil {
       const key1 = first[0]
       const key2 = second[0]
       return key1 < key2 ? -1 : (key1 > key2) ? 1 : 0
-    }).flatMap( rspEntry => {
+    }).flatMap( (rspEntry, index) => {
       const responsibilityKey = rspEntry[0]
       const nameList = rspEntry[1]
 
       const contributorType = CONTRIBUTOR_TYPES[responsibilityKey]
       const contributorTypeHeading = contributorType + ((nameList.length > 1) ? "s" : "") + ": "
-      const names =
+      return (<Fragment key={index}>{
         SourceRecordUtil.joinListOfReactElements(nameList.map( n => <span className={contributorType}>{n}</span>),
           joiner,
           ender,
           <span className="BiblioContributorType">{contributorTypeHeading}</span>
-        )
-      return names
+        )}
+      </Fragment>)
     })
 
-    return responsibilities
+    return (responsibilities.length > 0) ? <>{responsibilities}</> : null
   }
 
   /** Order a list of titles containing { type, lang, text} into react elements */
@@ -69,11 +75,18 @@ export class SourceRecordUtil {
       const thisTitle = <span lang={title.lang} className={titleClass}>{title.text}</span>
       titleMap.set(titleType, thisTitle)
     })
-    const records = SourceRecordUtil.joinListOfReactElements([titleMap.get("main"), titleMap.get("sub")].filter( (t) => t), ":", "")
-        .concat(SourceRecordUtil.joinListOfReactElements(
-          [titleMap.get("alt"), titleMap.get("alt-main"), titleMap.get("alt-sub")].filter( (t) => t),":", ")", "("))
+    const title = SourceRecordUtil.joinListOfReactElements(
+      [titleMap.get("main"), titleMap.get("sub")].filter( (t) => t), ":", "")
+    const alt = SourceRecordUtil.joinListOfReactElements(
+      [titleMap.get("alt"), titleMap.get("alt-main"), titleMap.get("alt-sub")].filter( (t) => t),":", ")", "(")
     
-    return records.length > 0 ? records.concat(["."]) : records
+    return (title || alt) ? (
+      <Fragment>
+        {title}
+        {alt}
+        {"."}
+      </Fragment>
+    ) : null
   }
 }
 
@@ -94,8 +107,11 @@ export function SourceRecordPart(props) {
   // the supported title types here are main, alt-main (alt), sub and alt-sub
   const titles = SourceRecordUtil.titleList(part.titles)
 
-  return (<span className={partType}>{
-    SourceRecordUtil.joinListOfReactElements(authors.concat(editors).concat(responsibilities).concat(titles), "", "")
+  return (<span className={partType}>
+    {authors}
+    {editors}
+    {responsibilities}
+    {titles}
   }</span>)
 }
 
@@ -150,8 +166,10 @@ export default function SourceRecord(props) {
       </Fragment>)}
     { (content.distributor || content.distributorWeb) && (
       <span className="distributor">
-        { (content.distributorWeb) && ([<a className="distributorWeb" href={content.distributorWeb}>{content.distributor}</a>, " "]) }
-        { (!content.distributorWeb) && content.distributor + " "}
+        { (content.distributorWeb) ?
+          <a className="distributorWeb" href={content.distributorWeb}>{content.distributor}</a> :
+          content.distributor }
+        { <span>" "</span>}
         { (content.distributorAccessDate) &&
         SourceRecordUtil.joinListOfReactElements([<span className="distributorAccessDate">{content.distributorAccessDate}</span>], "", ".", ". Accessed ")}
       </span>

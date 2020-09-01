@@ -3,7 +3,7 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React, {useContext} from "react"
+import React, {Fragment, useContext} from "react"
 import UpdateLanguage from "./UpdateLanguage"
 import UpdateLicense from "./UpdateLicense"
 import UpdateContributors from "./UpdateContributors"
@@ -176,7 +176,7 @@ export default class Transformer {
   }
 
   // standardProps.nodes[0] is an element
-  static transformElement(standardProps) {
+  static transformElement(standardProps, key) {
     const xml = standardProps.nodes[0]
     const inline = useContext(InlineMode)
 
@@ -192,15 +192,15 @@ export default class Transformer {
         case "jf:concurrent":
           return null
         case "jf:parallelGrp":
-          return <JfParallelGrp {...standardProps}/>
+          return <JfParallelGrp key={key} {...standardProps}/>
         case "tei:anchor":
-          return <TeiAnchor {...standardProps}/>
+          return <TeiAnchor key={key} {...standardProps}/>
         case "tei:teiHeader":
-          return <TeiHeader {...standardProps}/>
+          return <TeiHeader key={key} {...standardProps}/>
         case "tei:ptr":
-          return <TeiPtr {...standardProps} />
+          return <TeiPtr key={key} {...standardProps} />
         default:
-          return <GenericElement {...standardProps}/>
+          return <GenericElement key={key} {...standardProps}/>
       }
     }
   }
@@ -212,27 +212,29 @@ export default class Transformer {
    */
   static transform(standardProps) {
     const xmlList = standardProps.nodes
-    return xmlList.map( (xml) => {
-      // set the next context node
-      const nextProps = Object.assign({}, standardProps)
-      nextProps.nodes = [xml]
+    return <Fragment>{
+      xmlList.map((xml, index) => {
+        // set the next context node
+        const nextProps = Object.assign({}, standardProps)
+        nextProps.nodes = [xml]
 
-      switch (xml.nodeType) {
-        case Node.DOCUMENT_NODE:
-          return <DocumentNode {...nextProps}/>
-        case Node.DOCUMENT_FRAGMENT_NODE:
-          console.log("document fragment node")
-          return <DocumentFragment {...nextProps} />
-        case Node.ELEMENT_NODE:
-          return Transformer.transformElement(nextProps)
-        case Node.TEXT_NODE:
-          //console.log("text node", xml)
-          return <TextNode {...nextProps}/>
-        default:
-          console.log("wtf? ", xml)
-          return null
-      }
-    })
+        switch (xml.nodeType) {
+          case Node.DOCUMENT_NODE:
+            return <DocumentNode key={index} {...nextProps}/>
+          case Node.DOCUMENT_FRAGMENT_NODE:
+            console.log("document fragment node")
+            return <DocumentFragment key={index} {...nextProps} />
+          case Node.ELEMENT_NODE:
+            return Transformer.transformElement(nextProps, index)
+          case Node.TEXT_NODE:
+            //console.log("text node", xml)
+            return <TextNode key={index} {...nextProps}/>
+          default:
+            console.log("wtf? ", xml)
+            return null
+        }
+      })
+    }</Fragment>
   }
 
   /** Apply a transform, including a context switch to a list of nodes, treating the first as the major context switch
@@ -247,13 +249,17 @@ export default class Transformer {
     const props = Object.assign({}, standardProps)
     props.metadata = props.metadata || new TransformerMetadata()
     props.xmlDoc = doc
-    return props.nodes.map(node => {
-      const contextSwitch = new TransformerContextChain(contextSwitchLevel)
-      return contextSwitch.next(Object.assign(props, {
-        chain: contextSwitch,
-        nodes: [node]
-      }))
-    })
+    return (<Fragment>{
+      props.nodes.map((node, nodeIndex) => {
+        const contextSwitch = new TransformerContextChain(contextSwitchLevel)
+        return <Fragment key={nodeIndex}>{
+          contextSwitch.next(Object.assign(props, {
+            chain: contextSwitch,
+            nodes: [node]
+          }))
+        }</Fragment>
+      })
+    }</Fragment>)
   }
 
   static applyTo(xmlList, standardProps, contextSwitchLevel=ELEMENT_CONTEXT_SWITCH) {

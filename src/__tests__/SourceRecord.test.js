@@ -13,24 +13,23 @@ import ContributorRecord from "../ContributorRecord"
 const mockSourceGet = jest.fn()
 
 describe("SourceRecordUtil.joinListOfReactElements", () => {
-  it("should return an empty list when an empty list is input", () => {
+  it("should return null when an empty list is input", () => {
     const result = SourceRecordUtil.joinListOfReactElements([])
 
-    expect(result.length).toBe(0)
+    expect(result).toBeNull()
   })
 
   it("should return proper BiblioList* elements when everything is provided", () => {
     const array = [
       <span className="one">ONE</span>,
       <span className="two">TWO</span>]
-    const result = SourceRecordUtil.joinListOfReactElements(array, "JOIN", "END", "BEGIN")
+    const { queryByText } = render(SourceRecordUtil.joinListOfReactElements(array, "JOIN", "END", "BEGIN"))
 
-    expect(result.length).toBe(5)
-    expect(result[0]).toMatchObject(<span className="BiblioListBegin">BEGIN</span> )
-    expect(result[1]).toMatchObject(array[0])
-    expect(result[2]).toMatchObject(<span className="BiblioListJoin">JOIN</span> )
-    expect(result[3]).toMatchObject(array[1])
-    expect(result[4]).toMatchObject(<span className="BiblioListEnd">END</span> )
+    expect(queryByText("BEGIN") ).toBeInTheDocument()
+    expect(queryByText("ONE") ).toBeInTheDocument()
+    expect(queryByText("TWO") ).toBeInTheDocument()
+    expect(queryByText("JOIN") ).toBeInTheDocument()
+    expect(queryByText("END")).toBeInTheDocument()
 
   })
 
@@ -38,20 +37,19 @@ describe("SourceRecordUtil.joinListOfReactElements", () => {
     const array = [
       <span className="one">ONE</span>,
       <span className="two">TWO</span>]
-    const result = SourceRecordUtil.joinListOfReactElements(array, "JOIN", "END")
+    const {queryByText} = render(SourceRecordUtil.joinListOfReactElements(array, "JOIN", "END"))
 
-    expect(result.length).toBe(4)
-    expect(result[0]).toMatchObject(array[0])
-    expect(result[1]).toMatchObject(<span className="BiblioListJoin">JOIN</span> )
-    expect(result[2]).toMatchObject(array[1])
-    expect(result[3]).toMatchObject(<span className="BiblioListEnd">END</span> )
+    expect(queryByText("ONE") ).toBeInTheDocument()
+    expect(queryByText("TWO") ).toBeInTheDocument()
+    expect(queryByText("JOIN") ).toBeInTheDocument()
+    expect(queryByText("END")).toBeInTheDocument()
   })
 })
 
 describe("SourceRecordUtil.namedList", () => {
   it("produces no list given an empty array", () => {
     const result = SourceRecordUtil.namedList([], "anything")
-    expect(result.length).toBe(0)
+    expect(result).toBeNull()
   })
 
   it("produces a list with the given type, joiner and ender", () => {
@@ -64,20 +62,19 @@ describe("SourceRecordUtil.namedList", () => {
     const nameType = "TYPE"
     const joiner = "JOIN"
     const ender = "END"
-    const result = SourceRecordUtil.namedList(nameList, nameType, joiner, ender)
+    const {queryByText} = render(SourceRecordUtil.namedList(nameList, nameType, joiner, ender))
 
-    expect(result.length).toBe(4)
-    expect(result[0]).toMatchObject(<span className={nameType}>A Name</span>)
-    expect(result[1]).toMatchObject(<span className="BiblioListJoin">JOIN</span> )
-    expect(result[2]).toMatchObject(<span className={nameType}>B Name</span>)
-    expect(result[3]).toMatchObject(<span className="BiblioListEnd">END</span> )
+    expect(queryByText("A Name")).toBeInTheDocument()
+    expect(queryByText("JOIN")).toBeInTheDocument()
+    expect(queryByText("B Name")).toBeInTheDocument()
+    expect(queryByText("END")).toBeInTheDocument()
   })
 })
 
 describe("SourceRecordUtil.responsibilityList", () => {
-  it("returns an empty list given an empty list", () => {
+  it("returns null given an empty list", () => {
     const result = SourceRecordUtil.responsibilityList([])
-    expect(result.length).toBe(0)
+    expect(result).toBeNull()
   })
 
   it("produces a list of given responsibility types", () => {
@@ -98,25 +95,23 @@ describe("SourceRecordUtil.responsibilityList", () => {
     const joiner = "JOIN"
     const ender = "END"
 
-    const result = SourceRecordUtil.responsibilityList(respList, joiner, ender)
+    const {container, queryByText, queryAllByText } = render(SourceRecordUtil.responsibilityList(respList, joiner, ender))
 
-    //expect(result.length).toBe(8)
-    expect(result[0]).toMatchObject(<span className="BiblioListBegin"><span className="BiblioContributorType">Transcriber: </span></span>)
-    expect(result[1]).toMatchObject(<span className="Transcriber">Transcriber One</span> )
-    expect(result[2]).toMatchObject(<span className="BiblioListEnd">END</span> )
-    expect(result[3]).toMatchObject(<span className="BiblioListBegin"><span className="BiblioContributorType">Translators: </span></span> )
-    expect(result[4]).toMatchObject(<span className="Translator">Translator One</span> )
-    expect(result[5]).toMatchObject(<span className="BiblioListJoin">JOIN</span> )
-    expect(result[6]).toMatchObject(<span className="Translator">Translator Two</span> )
-    expect(result[7]).toMatchObject(<span className="BiblioListEnd">END</span> )
-
+    expect(queryByText("Transcriber:")).toBeInTheDocument()
+    expect(queryByText("Transcriber One")).toBeInTheDocument()
+    expect(queryAllByText("END").length).toBe(2)
+    expect(queryByText("Translators:")).toBeInTheDocument()
+    expect(queryByText("Translator One")).toBeInTheDocument()
+    expect(queryByText("JOIN")).toBeInTheDocument()
+    expect(queryByText("Translator Two")).toBeInTheDocument()
   })
+
 })
 
 describe("SourceRecordUtil.titleList", () => {
-  it("returns an empty list given an empty list", () => {
+  it("returns null given an empty list", () => {
     const result = SourceRecordUtil.titleList([])
-    expect(result.length).toBe(0)
+    expect(result).toBeNull()
   })
 
   it("produces a list of titles when everything is provided", () => {
@@ -143,16 +138,14 @@ describe("SourceRecordUtil.titleList", () => {
       }
     ]
 
-    const result = SourceRecordUtil.titleList(titleList)
-    expect(result[0]).toMatchObject(<span className="title_main" lang="en">Main</span>)
-    expect(result[1]).toMatchObject(<span className="BiblioListJoin">:</span>)
-    expect(result[2]).toMatchObject(<span className="title_sub" lang="en">Sub</span>)
-    expect(result[3]).toMatchObject(<span className="BiblioListEnd"></span>)
-    expect(result[4]).toMatchObject(<span className="BiblioListBegin">(</span>)
-    expect(result[5]).toMatchObject(<span className="title_alt" lang="en">Alt</span>)
-    expect(result[6]).toMatchObject(<span className="BiblioListJoin">:</span>)
-    expect(result[7]).toMatchObject(<span className="title_alt-sub" lang="en">AltSub</span>)
-    expect(result[8]).toMatchObject(<span className="BiblioListEnd">)</span>)
+    const {queryByText, queryAllByText} = render(SourceRecordUtil.titleList(titleList))
+    expect(queryByText("Main")).toBeInTheDocument()
+    expect(queryAllByText(":").length).toBe(2)
+    expect(queryByText("Sub")).toBeInTheDocument()
+    expect(queryByText("(")).toBeInTheDocument()
+    expect(queryByText("Alt")).toBeInTheDocument()
+    expect(queryByText("AltSub")).toBeInTheDocument()
+    expect(queryByText(")")).toBeInTheDocument()
   })
 
   it("produces a list of titles when only mains are provided", () => {
@@ -169,12 +162,11 @@ describe("SourceRecordUtil.titleList", () => {
       }
     ]
 
-    const result = SourceRecordUtil.titleList(titleList)
-    expect(result[0]).toMatchObject(<span className="title_main" lang="en">Main</span>)
-    expect(result[1]).toMatchObject(<span className="BiblioListEnd"></span>)
-    expect(result[2]).toMatchObject(<span className="BiblioListBegin">(</span>)
-    expect(result[3]).toMatchObject(<span className="title_alt" lang="en">Alt</span>)
-    expect(result[4]).toMatchObject(<span className="BiblioListEnd">)</span>)
+    const {queryByText} = render(SourceRecordUtil.titleList(titleList))
+    expect(queryByText("Main")).toBeInTheDocument()
+    expect(queryByText("(")).toBeInTheDocument()
+    expect(queryByText("Alt")).toBeInTheDocument()
+    expect(queryByText(")")).toBeInTheDocument()
   })
 })
 

@@ -5,7 +5,7 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React from "react"
+import React, {Fragment} from "react"
 import ContributorRecord from "./ContributorRecord"
 
 export const TYPE_CODES = {
@@ -42,10 +42,10 @@ export default function ContributorList(props) {
       return <ContributorRecord user={userName} key={key}/>
     })
     const headerValue = TYPE_CODES[contribType] + "s"
-    return [
-      <h3>{headerValue}</h3>,
-      crecords
-    ]
+    return (<Fragment key={headerValue}>
+      <h3>{headerValue}</h3>
+      {crecords}
+    </Fragment>)
   })
 
   return (<div className="ContributorList" lang="en">
