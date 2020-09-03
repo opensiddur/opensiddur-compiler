@@ -29,11 +29,6 @@ import {InlineMode} from "./InlineModeContext"
 // conditional evaluation on context
 // add tracking of text direction on new document?
 // add tracking of text direction on new element?
-// add license metadata to a global list
-// add tracking of contributors in a global list
-// add tracking of sources by document
-// add tracking of sources in a global list
-// display license, contributor, source lists at the end of the document [not in this class]
 // add support for tracking settings via jf:set and metadata to a global list
 // add support for live conditional evaluation
 // add styling
