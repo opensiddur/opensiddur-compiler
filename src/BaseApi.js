@@ -4,6 +4,8 @@
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
 
+import {fetchCache} from "./FetchCache"
+
 const FORMAT_XML = "xml"
 const FORMAT_HTML = "html"
 const ACCEPTED_FORMATS = [FORMAT_XML, FORMAT_HTML]
@@ -23,30 +25,6 @@ export default class BaseApi {
   static async fetchText(url, format) {
     console.assert(ACCEPTED_FORMATS.includes(format), `format '${format}' must be in ACCEPTED_FORMATS`)
 
-    let response
-    let responseText
-
-    const accept = (format === FORMAT_XML) ? MIMETYPE_XML : MIMETYPE_HTML
-
-    try {
-      response = await fetch(url, {
-        headers: {
-          "Accept": accept
-        }
-      })
-      responseText = await response.text()
-    }
-    catch (error) {
-      throw new ApiError(false, "fetch failed", error.message)
-    }
-
-    if (response.ok) {
-      return responseText
-    }
-    else {
-      const status = response.status
-      // this is an API error
-      throw new ApiError(false, status, responseText)
-    }
+    return await fetchCache(url, format)
   }
 }
