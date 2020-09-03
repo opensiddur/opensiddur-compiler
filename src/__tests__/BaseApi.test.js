@@ -5,10 +5,12 @@
  */
 
 import BaseApi, {ApiError} from "../BaseApi"
+import {clearCache} from "../FetchCache"
 
 describe("fetching data", () => {
 
   beforeEach(() => {
+    clearCache()
     fetch.resetMocks();
   })
 

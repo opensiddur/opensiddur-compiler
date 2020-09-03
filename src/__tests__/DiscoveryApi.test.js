@@ -1,5 +1,6 @@
 import DiscoveryApi from '../DiscoveryApi.js'
 import {ApiError} from "../BaseApi"
+import {clearCache} from "../FetchCache"
 
 it("correctly parses a valid discovery API HTML", () => {
   const html = `
@@ -58,6 +59,7 @@ describe("fetching data", () => {
   let windowSpy
 
   beforeEach(() => {
+    clearCache()
     fetch.resetMocks();
     windowSpy = jest.spyOn(global, 'window', 'get')
 
