@@ -13,8 +13,8 @@ describe("SelectableResultsList", () => {
   it("shows Loading when there is no data", () => {
     const results = undefined
     const selectableResultsList = <SelectableResultsList results={results} selectionCallback={selectionCallback} />
-    const { container, getByText } = render(selectableResultsList)
-    const loadMessage = getByText("Loading...")
+    const { container, getByRole } = render(selectableResultsList)
+    const loadMessage = getByRole("status")
     expect(loadMessage).toBeDefined()
     expect(container.getElementsByTagName("li").length).toBe(1)
   })

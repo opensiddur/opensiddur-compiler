@@ -14,6 +14,7 @@ import React, {useContext, useEffect, useState} from "react"
 import Transformer, {META_SETTINGS, SETTINGS_OPENSIDDUR, SETTINGS_TRANSLATION} from "./Transformer"
 import DocumentApi from "./DocumentApi"
 import {InlineMode} from "./InlineModeContext"
+import Loading from "./Loading"
 
 /** Independently testable utility functions */
 export class ViewTransformerUtils {
@@ -89,7 +90,7 @@ export default function ViewTransformer(props) {
       nodes: content,
       transformerRecursionFunction: transformerRecursionFunction,
       metadata: props.metadata
-    }) : <div>Loading...</div>
+    }) : <Loading/>
 
   return <div className="ViewTransformer">{transformed}</div>
 }

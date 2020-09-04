@@ -5,6 +5,7 @@
  */
 import React from 'react';
 import SelectableResult from "./SelectableResult"
+import Loading from "./Loading"
 
 export default function SelectableResultsList(props) {
   /* props expected:
@@ -14,7 +15,7 @@ export default function SelectableResultsList(props) {
 
   return (
     <ul className="SelectableResultsList">{
-      (props.results === undefined) ? <li key="0">Loading...</li> :
+      (props.results === undefined) ? <li key="0"><Loading/></li> :
       props.results.map(result => {
         const key = result.url.split("/").pop()
         return <SelectableResult key={key} result={result} selectionCallback={props.selectionCallback}/>

@@ -81,8 +81,8 @@ describe("ViewTransformer component", () => {
     mockDocGet.mockResolvedValue(docContentXml)
     mockApply.mockReturnValueOnce(transformedDocument)
 
-    const { getByText } = render(<ViewTransformer document={docName} metadata={metadata} />)
-    expect(getByText(/Loading/i)).toBeInTheDocument()
+    const { getByText, getByRole } = render(<ViewTransformer document={docName} metadata={metadata} />)
+    expect(getByRole("status")).toBeInTheDocument()
 
     await wait()
     expect(mockDocGet).toHaveBeenCalledTimes(1)
@@ -106,8 +106,8 @@ describe("ViewTransformer component", () => {
     mockApply.mockReturnValueOnce(transformedDocument)
 
 
-    const { getByText } = render(<ViewTransformer document={docName} metadata={metadata} />)
-    expect(getByText(/Loading/i)).toBeInTheDocument()
+    const { getByText, getByRole } = render(<ViewTransformer document={docName} metadata={metadata} />)
+    expect(getByRole("status")).toBeInTheDocument()
 
     await wait()
     expect(mockDocGet).toHaveBeenCalledTimes(1)
@@ -129,8 +129,8 @@ describe("ViewTransformer component", () => {
     mockGetFragment.mockReturnValueOnce([fragmentXml])
     mockApply.mockReturnValueOnce(transformedDocument)
 
-    const { getByText } = render(<ViewTransformer document={docName} metadata={metadata} fragment={fragName}/>)
-    expect(getByText(/Loading/i)).toBeInTheDocument()
+    const { getByText, getByRole } = render(<ViewTransformer document={docName} metadata={metadata} fragment={fragName}/>)
+    expect(getByRole("status")).toBeInTheDocument()
 
     await wait()
     expect(mockDocGet).toHaveBeenCalledTimes(1)
@@ -152,11 +152,11 @@ describe("ViewTransformer component", () => {
     mockDocGet.mockResolvedValue(docContentXml)
     mockApply.mockReturnValueOnce(transformedDocument)
 
-    const { getByText } = render(
+    const { getByText, getByRole } = render(
       <InlineMode.Provider value={true}>
         <ViewTransformer document={docName} />
       </InlineMode.Provider>)
-    expect(getByText(/Loading/i)).toBeInTheDocument()
+    expect(getByRole("status")).toBeInTheDocument()
 
     await wait()
     expect(mockDocGet).toHaveBeenCalledTimes(1)
@@ -180,8 +180,8 @@ describe("ViewTransformer component", () => {
     mockGetFragment.mockReturnValueOnce([fragmentXml])
     mockApply.mockReturnValueOnce(transformedDocument)
 
-    const { getByText } = render(<ViewTransformer document={docName} metadata={metadata} fragment={fragName} api={apiName}/>)
-    expect(getByText(/Loading/i)).toBeInTheDocument()
+    const { getByText, getByRole } = render(<ViewTransformer document={docName} metadata={metadata} fragment={fragName} api={apiName}/>)
+    expect(getByRole("status")).toBeInTheDocument()
 
     await wait()
     expect(mockDocGet).toHaveBeenCalledTimes(1)
