@@ -7,7 +7,7 @@
  */
 import React from "react"
 import SourceRecord from "./SourceRecord"
-
+import "./SourceList.css"
 
 /** Show a list of sources
  *

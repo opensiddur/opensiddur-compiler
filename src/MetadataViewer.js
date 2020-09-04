@@ -12,6 +12,7 @@ import SourceList from "./SourceList"
 import {ActiveLicenseContext, GlobalLicenseContext} from "./LicenseMetadataContext"
 import LicenseList from "./LicenseList"
 import {ActiveSourcesContext, GlobalSourcesContext} from "./SourcesMetadataContext"
+import {isEmptyObject} from "./Utils"
 
 export function ActiveMetadataViewer({ children }) {
   const contributorContext = useContext(ActiveContributorContext)
@@ -23,7 +24,8 @@ export function ActiveMetadataViewer({ children }) {
     licenseContext.activateState(null)
     sourceContext.activateState(null)
   }
-  const anyActiveState = licenseContext.activeState || sourceContext.activeState || !!contributorContext.activeState
+  const anyActiveState = !!licenseContext.activeState || !!sourceContext.activeState || !isEmptyObject(contributorContext.activeState)
+  console.log("MetadataViewer: anyActiveState =", anyActiveState, !!licenseContext.activeState, !!sourceContext.activeState, !isEmptyObject(contributorContext.activeState))
 
   return <div className="ActiveMetadataViewer">
     { anyActiveState && <button onClick={deactivate}>Close</button> }
