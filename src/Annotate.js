@@ -12,6 +12,7 @@ import {
   GlobalAnnotationContext
 } from "./AnnotationMetadataContext"
 import React, {useContext, useEffect, useMemo} from "react"
+import "./Annotate.css"
 
 /** Determine if the given XML is a part, and, if so, if it is the first part
  * @param xml {Node}
@@ -35,7 +36,7 @@ export const ANNOTATION_MARK = "\u26ac"
  */
 export default function Annotate(props) {
   const xml = props.nodes[0]
-  const annotationPtr = (xml.nodeType === Node.ELEMENT_NODE) && (
+  const annotationPtr = (xml.nodeType === Node.ELEMENT_NODE) && (
     [ // get the first nonempty attribute
       props.attribute && xml.hasAttribute(props.attribute) && xml.getAttribute(props.attribute),
       xml.hasAttribute("jf:annotation") && xml.getAttribute("jf:annotation"),

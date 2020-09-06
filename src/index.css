@@ -61,12 +61,6 @@ code {
   text-decoration: none;
 }
 
-.App {
-  position: fixed;
-  top: 50px;
-  padding-top: 5px;
-}
-
 /* Change the link color to #111 (black) on hover */
 .Header li a:hover {
   background-color: #111;
@@ -75,6 +69,7 @@ code {
 .Content {
   display: inline-block;
   width: 50%;
+  overflow-y: auto;
 }
 
 .LeftSidebar {

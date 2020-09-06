@@ -9,6 +9,7 @@ import {useContext} from "react"
 import {ActiveLicenseContext, CurrentLicenseContext} from "./LicenseMetadataContext"
 import {ActiveSourcesContext, CurrentSourcesContext} from "./SourcesMetadataContext"
 import {ActiveAnnotationContext, CurrentAnnotationContext} from "./AnnotationMetadataContext"
+import "./TextNode.css"
 
 export default function TextNode(props) {
   const xml = props.nodes[0]
@@ -34,7 +35,7 @@ export default function TextNode(props) {
   }
 
   if (content) {
-    return <span onClick={activate}>{content}</span>
+    return <span className="TextNode" onClick={activate}>{content}</span>
   }
   else return null
 }
