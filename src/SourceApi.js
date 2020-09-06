@@ -111,9 +111,9 @@ export class Source {
     const publicationDate = markup.evaluate("tei:date", imprint, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
 
     const distributor = imprint.getElementsByTagNameNS(TEI_NS, "distributor").item(0)
-    const distributorWeb = distributor.getElementsByTagNameNS(TEI_NS, "ref").item(0)
-    const distributorName = distributor.getElementsByTagNameNS(TEI_NS, "name").item(0) || distributorWeb
-    const distributorAccessDate = distributor.getElementsByTagNameNS(TEI_NS, "date").item(0) // must be type ='access'
+    const distributorWeb = distributor && distributor.getElementsByTagNameNS(TEI_NS, "ref").item(0)
+    const distributorName = distributor && distributor.getElementsByTagNameNS(TEI_NS, "name").item(0) || distributorWeb
+    const distributorAccessDate = distributor && distributor.getElementsByTagNameNS(TEI_NS, "date").item(0) // must be type ='access'
 
     const note = markup.evaluate("//tei:note[not(@type)]", markup, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue
     const copyright = markup.evaluate("//tei:note[@type='copyright']", markup, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue

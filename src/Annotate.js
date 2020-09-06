@@ -25,7 +25,7 @@ export function isFirstPart(xml) {
   else return true
 }
 
-export const ANNOTATION_MARK = "&#x26ac;"
+export const ANNOTATION_MARK = "\u26ac"
 
 /** Annotation:
  *

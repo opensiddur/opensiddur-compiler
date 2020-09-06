@@ -3,13 +3,19 @@ import {BrowserRouter as Router, Link, Redirect, Route, Switch} from "react-rout
 import Chooser from "./Chooser"
 import Viewer from "./Viewer"
 import './App.css';
+import logo from "./img/open-siddur-logo.png"
 
 function App() {
 
   return (
     <Router>
-      <nav>
+      <nav className="Header">
         <ul>
+          <li>
+            <Link to="/">
+              <img alt="Open Siddur Logo" src={logo}/>
+            </Link>
+          </li>
           <li>
             <Link to="/">Choose</Link>
           </li>
