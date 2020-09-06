@@ -8,6 +8,7 @@ import DiscoveryApi from "./DiscoveryApi"
 import SearchBox from "./SearchBox"
 import SelectableResultsList from "./SelectableResultsList"
 import SearchPager from "./SearchPager"
+import "./SearchableSelectableResultsList.css"
 
 export default function SearchableSelectableResultsList(props) {
   /* props expected:
@@ -44,8 +45,10 @@ export default function SearchableSelectableResultsList(props) {
 
   return (
     <div className="SearchableSelectableResultsList">
-      <SearchBox placeholder="Search..." queryCallback={queryCallback} />
-      <SearchPager window="5" results={resultData} pagingCallback={pagingCallback} />
+      <div className="BoxPager">
+        <SearchBox placeholder="Search..." queryCallback={queryCallback} />
+        <SearchPager window="5" results={resultData} pagingCallback={pagingCallback} />
+      </div>
       <SelectableResultsList results={resultData.items} selectionCallback={props.selectionCallback}/>
     </div>
   )

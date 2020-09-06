@@ -3,7 +3,8 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React from 'react';
+import React from 'react'
+import "./SearchPager.css"
 
 export default function SearchPager(props) {
   /* props:
@@ -35,7 +36,7 @@ export default function SearchPager(props) {
   return (
     <div className="SearchPager">
       <span className="NumResults"><span className="Number">{pagerLib.totalResults}</span> results</span>
-      { pagerLib.showFastReverse() && <span className="PagingClick FastReverse" onClick={() => handlePaging(fastBackPage)}>1&lt;&lt;</span> }
+      { pagerLib.showFastReverse() && <span className="PagingClick FastReverse" onClick={() => handlePaging(fastBackPage)}>1&#xab;</span> }
       { pagesToShow.map( page => {
         return (
           <span key={page} className={pageClass(page)} onClick={() => handlePaging(page)}>{
@@ -44,7 +45,7 @@ export default function SearchPager(props) {
         )
       })}
       { pagerLib.showFastForward() &&
-        <span className="PagingClick FastForward" onClick={() => handlePaging(fastFwdPage)}>&gt;&gt;{pagerLib.lastPage}</span> }
+        <span className="PagingClick FastForward" onClick={() => handlePaging(fastFwdPage)}>&#xbb;{pagerLib.lastPage}</span> }
 
     </div>
   )

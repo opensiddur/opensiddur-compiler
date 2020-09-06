@@ -3,7 +3,8 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
+import "./SearchBox.css"
 
 export default function SearchBox(props) {
   /* props:
@@ -20,7 +21,7 @@ export default function SearchBox(props) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="SearchBox" onSubmit={handleSubmit}>
       <label>
         <input
           type="search"
