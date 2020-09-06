@@ -3,7 +3,8 @@
  * Open Siddur Project
  * Licensed under the GNU Lesser General Public License, version 3 or later
  */
-import React from 'react';
+import React from 'react'
+import "./SelectableResult.css"
 
 export default function SelectableResult(props) {
   /* props:
@@ -17,7 +18,7 @@ export default function SelectableResult(props) {
   }
 
   return (
-    <li className="SelectableResult" onClick={handleClick}>
+    <li className="SelectableResult"  onClick={handleClick}>
       <span className="SelectableResultTitle">{result.title}</span>
       { (result.hasOwnProperty("context") && result.context.length > 0) &&
         <ol className="SelectableResultContexts">{
