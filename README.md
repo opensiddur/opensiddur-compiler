@@ -1,8 +1,8 @@
 # Open Siddur Compiler
 
 Build status:
-master: [![master build status](https://travis-ci.org/opensiddur/opensiddur-compiler.svg?branch=master)](https://travis-ci.org/opensiddur/opensiddur)
-develop: [![develop build status](https://travis-ci.org/opensiddur/opensiddur-compiler.svg?branch=develop)](https://travis-ci.org/opensiddur/opensiddur)
+master: [![master build status](https://travis-ci.com/opensiddur/opensiddur-compiler.svg?branch=master)](https://travis-ci.com/opensiddur/opensiddur-compiler)
+develop: [![develop build status](https://travis-ci.com/opensiddur/opensiddur-compiler.svg?branch=develop)](https://travis-ci.com/opensiddur/opensiddur-compiler)
 
 
 With the advent of JLPTEI 2.0, which is not backwards compatible with JLPTEI 1.0,
