@@ -1,0 +1,7 @@
+.AnnotationMarker {
+    cursor: pointer;
+}
+
+.AnnotationMarker:hover {
+    text-decoration: underline;
+}

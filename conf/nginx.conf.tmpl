@@ -1,10 +1,4 @@
 server {
-	listen 80;
-	server_name ${DNS_NAME};
-}
-
-server {
-        listen 443 ssl;
         server_name ${DNS_NAME};
         charset utf-8;
     
@@ -17,7 +11,7 @@ server {
         proxy_read_timeout          600;
         send_timeout                600;
 
-        root ${INSTALL_DIR};
+        root ${INSTALL_DIR}/build;
 
         location /api {
             proxy_pass https://${DB_DNS_NAME}$request_uri;
@@ -48,7 +42,7 @@ server {
             expires -1;
             add_header Pragma "no-cache";
             add_header Cache-Control "no-store, no-cache, must-revalidate, post-check=0, pre-check=0";
-            try_files $uri $uri/ /index.html =404;
+            try_files $uri $uri/ public/$uri public/$uri/ /public/index.html =404;
         }
 }
 

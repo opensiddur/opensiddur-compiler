@@ -1,0 +1,23 @@
+.SearchPager {
+    padding-left: 1em;
+    padding-right: 1em;
+    display: inline-block;
+    text-align: center;
+}
+
+.PagingClick {
+    display: inline-block;
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+    color: blue;
+    text-decoration: underline;
+}
+
+.PagingClick:hover {
+    cursor: pointer;
+}
+
+.PagingClick.Selected {
+    color: black;
+    font-weight: bold;
+}

@@ -1,0 +1,7 @@
+.SelectableResult {
+    cursor: pointer;
+}
+
+.SelectableResult:hover {
+    text-decoration: underline;
+}

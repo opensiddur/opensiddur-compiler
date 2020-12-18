@@ -1,4 +1,5 @@
-language: generic
+language: javascript
+node_js: 12
 git:
   depth: false
 branches:
@@ -15,9 +16,9 @@ env:
     - INSTANCE_NAME=${INSTANCE_BASE}-${VERSION}
     - ZONE=us-west2-a
     - MACHINE_TYPE=g1-small
-    - IMAGE=ubuntu-1804-bionic-v20190918
     - IMAGE_PROJECT=ubuntu-os-cloud
-    - BOOT_DISK_SIZE_GB=10
+    - IMAGE_VERSION=ubuntu-2004
+    - BOOT_DISK_SIZE_GB=20
     - SERVICE_ACCOUNT=opensiddur-deploy-1@opensiddur-client.iam.gserviceaccount.com
     # DYN_EMAIL
     - secure: "ZUN56scxYuPmpoRkmbcv1+kiZPPX3CT4RkL6hmkA3GEIMaNtRvvEHfbxX+xT+f1Yqrqn+mcpB+Y+4BV/YWDi5bGbFDrwY59BWghktcO7iIGNPBbJZc4U+Wx6LMgGy92BT3+I9+hFgNHa8hEBcHZ7s6QTW8Mv/8ngSVfbJjd5fxN8a1fEzhdD1H+3x8FAliv01DFa51z0jOR5ej8SLmT2c+B7UVwEQrwGheGs67YO57jhvJAegMQfMoVT7UFDurNuRXbJ2Jckl6HsHFWYWfN0sywudps0rtUTdAbmxdCxHj5xx9ZC1kN4PS2EUZGaAigrqU0gaRXGWFgJNQn08x9EaU8rQ0UTgeEUI9TxCukjP9uSs+pTgGD0uFZZvK7TvRkXBoK38ZsEQGEsFn6eoyiZHXYAPS9GaPAg6CtCQyQ+Wc3rg4cTE667NmJBSF02AtG1Bs3diRXfTFhWQeI/ENwOYmM651B1jCYttXp0qm45WMgJcJm9PYxlvqcJ3QZw2Egj3D7PNAH1Gy7Z3DgsRTWvrqSFzEgnJe+q11Xrj+9QR5fQsDiwLJHOIyArqe7zam0D1B9xYJEphtiALDYCp9MSpBj0r1xMwPL/ZTxjn1HSj92wuc4JE/Fv3JJlQ7k7P46qbrL6oQfAHCPLrZitIxOR2e/GWSts0F7gmQHV7VGSWuY="
@@ -41,9 +42,13 @@ before_install:
   - gcloud auth activate-service-account --key-file=client-secret.json
   - gcloud config set project ${PROJECT_NAME}
   - ssh-keygen -q -N "" -f ~/.ssh/google_compute_engine
+  - npm install
 
+# CI defaults to true and treats warnings as errors
 script:
+  - CI=false npm run build
   - |
+    npm test &&
     gcloud compute \
       --project=${PROJECT_NAME} instances create ${INSTANCE_NAME} \
       --zone=${ZONE} \
@@ -53,7 +58,7 @@ script:
       --maintenance-policy=MIGRATE \
       --scopes=https://www.googleapis.com/auth/cloud-platform \
       --tags=http-server,https-server \
-      --image=${IMAGE} \
+      --image=$(gcloud compute images list --filter=${IMAGE_PROJECT} --filter=${IMAGE_VERSION} | tail -n 1 | cut -f 1 -d " ") \
       --image-project=${IMAGE_PROJECT} \
       --boot-disk-size=${BOOT_DISK_SIZE_GB}GB \
       --boot-disk-type=pd-standard \

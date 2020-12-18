@@ -18,7 +18,7 @@ useradd -c "client"  client
 echo "Downloading prerequisites..."
 apt update
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -yq ddclient nginx python3-certbot-nginx
+apt-get install -yq ddclient nginx python3-certbot-nginx npm
 
 echo "Obtaining sources..."
 mkdir -p /usr/local
@@ -27,6 +27,12 @@ git clone git://github.com/opensiddur/opensiddur-compiler.git
 cd opensiddur-compiler
 git checkout ${BRANCH}
 export SRC=$(pwd)
+
+echo "Installing dependencies..."
+npm install
+
+echo "Building sources..."
+npm run build
 
 chown -R client:client ${INSTALL_DIR}
 
@@ -47,7 +53,7 @@ then
     export DNS_NAME="compiler-dev.jewishliturgy.org"
     export DB_DNS_NAME="db-dev.jewishliturgy.org";
 fi
-INSTANCE_BASE=${PROJECT}-app-${BRANCH//\//-}
+INSTANCE_BASE=${PROJECT}-compiler-${BRANCH//\//-}
 
 echo "Installing dynamic DNS updater to update ${DNS_NAME}..."
 cat << EOF > /etc/ddclient.conf
